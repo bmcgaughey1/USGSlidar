@@ -2,10 +2,11 @@ Package: USGSlidar
 Type: Package
 Title: Provides Functions to Access USGS LIDAR Data Collection
 Version: 0.1.0
-Authors@R: person("Bob", "McGaughey", email = "bob.mcgaughey@usda.gov", role = c("aut", "cre"))
+Authors@R: person("Robert", "McGaughey", email = "robert.mcgaughey@usda.gov", role = c("aut", "cre"))
 Description: Includes functions to browse the USGS LIDAR data collection,
     query the collection for coverage for specific locations, and retrieve 
-    tiles covering a location.
+    tiles covering a location. Also works with several other lidar data
+    collections.
 Imports:
     methods,
     jsonlite,

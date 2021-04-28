@@ -8,6 +8,7 @@
 #   Install Package:           Ctrl + Shift + B
 #   Check Package:             Ctrl + Shift + E
 #   Test Package:              Ctrl + Shift + T
+#   Build documentation:       Ctrl + Shift + D...not working
 #   Build vignette:            Ctrl + Shift + K
 #
 # setwd("G:/R_Stuff/USGSlidar")
@@ -1620,7 +1621,7 @@ buildPDALPipelineENTWINE <- function(
   pipelineTemplatelocal <- NULL
   if (pipelineTemplateFile == "") {
     # read template from package data
-    pipelineTemplatelocal <- jsonlite::fromJSON(system.file("extdata", "plots.json", package = "USGSlidar"))
+    pipelineTemplatelocal <- jsonlite::fromJSON(system.file("extdata", "plots.json", package = "USGSlidar", mustWork = TRUE))
   } else {
     # read user provided template
     pipelineTemplatelocal <- jsonlite::fromJSON(pipelineTemplateFile)
