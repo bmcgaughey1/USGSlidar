@@ -9,7 +9,7 @@ queryUSGSProjectIndex(
   y,
   buffer = 0,
   shape = "square",
-  aoi = "",
+  aoi = NA,
   crs = "",
   index = "",
   segments = 60,
@@ -36,15 +36,16 @@ polygon features to reduce the area considered. However, you may end up
 with weird shapes if the distance is larger than the width of the polygon.
 Data in \code{(x,y)} and \code{aoi} are projected into the web mercator
 coordinate reference system before the buffer operation is done so the
-units for \code{buffer} are always meters. When \code{buffer} is 0,
-\code{aoi} is point(s), and \code{return = "aoi"} the return type
+units for \code{buffer} are always meters. When \code{buffer = 0},
+\code{aoi} is point(s), and \code{return = "index"} the return type
 will be polygon(s). While this is useful to determine the lidar
 projects needed to provide coverage for plots, it doesn't allow you to
 maintain a set of points that are covered by one or more lidar projects.
 If you want the set of points, pass the set of all points as \code{aoi},
 set \code{buffer = 0}, and set \code{return = "aoi"} but realize that a
 specific sample area associated with a point may actually be covered by
-additional lidar projects than those that cover the point location.}
+additional lidar projects than those that cover the point location or may
+be partially outside the lidar project polygon.}
 
 \item{shape}{Character string describing the shape of the sample area in
 the case of point features or the shape applied to the buffer corners
@@ -55,7 +56,9 @@ describing the area of interest. Can be points or polygons.}
 
 \item{crs}{Valid \code{proj4string} string defining the coordinate
 reference system of \code{(x,y)}. \code{crs} is required when using
-\code{(x,y)}.}
+\code{(x,y)}. This can also be a valid \code{SRS_string} for
+use with the sp::CRS() function where it will be provided as the \code{projargs}
+argument. \code{crs} is ignored when \code{aoi} is specified.}
 
 \item{index}{Index file for USGS lidar projects. If not provided, an index
 previously specified by a call to \code{fetchUSGSProjectIndex} or
@@ -91,7 +94,9 @@ area-of-interest. Valid values are \code{"Spatial"} or \code{"sf"}.
 reference system of the returned \code{SpatialPolygonsDataFrame} or
 \code{sf} object. A value of \code{"same"} will project the return object
 to the same coordinate reference system as \code{aoi} or to \code{crs} when
-used with \code{(x,y)}.}
+used with \code{(x,y)}. This can also be a valid \code{SRS_string} for
+use with the sp::CRS() function where it will be provided as the \code{projargs}
+argument.}
 
 \item{dropNAColumns}{list of column names to test in the index for NA values.
 If any values in any of the columns are NA, the feature will be dropped
@@ -134,6 +139,6 @@ Finds all USGS lidar projects that cover the area-of-interest
 \examples{
 \dontrun{
 queryUSGSProjectIndex(-13540901, 5806426, 180, shape = "circle",
-  CRS = CRS(SRS_string="EPSG:3857"))
+  crs = CRS(SRS_string="EPSG:3857"))
   }
 }

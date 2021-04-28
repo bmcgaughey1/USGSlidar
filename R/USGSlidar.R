@@ -95,7 +95,7 @@ fetchFile <- function(
 #' }
 #' @export
 fetchUSGSProjectIndex <- function(
-  destfile,
+  destfile = "",
   url = "",
   type = "FESM",
   method = "libcurl",
@@ -383,15 +383,16 @@ fetchUSGSTiles <- function(
 #'   with weird shapes if the distance is larger than the width of the polygon.
 #'   Data in \code{(x,y)} and \code{aoi} are projected into the web mercator
 #'   coordinate reference system before the buffer operation is done so the
-#'   units for \code{buffer} are always meters. When \code{buffer} is 0,
-#'   \code{aoi} is point(s), and \code{return = "aoi"} the return type
+#'   units for \code{buffer} are always meters. When \code{buffer = 0},
+#'   \code{aoi} is point(s), and \code{return = "index"} the return type
 #'   will be polygon(s). While this is useful to determine the lidar
 #'   projects needed to provide coverage for plots, it doesn't allow you to
 #'   maintain a set of points that are covered by one or more lidar projects.
 #'   If you want the set of points, pass the set of all points as \code{aoi},
 #'   set \code{buffer = 0}, and set \code{return = "aoi"} but realize that a
 #'   specific sample area associated with a point may actually be covered by
-#'   additional lidar projects than those that cover the point location.
+#'   additional lidar projects than those that cover the point location or may
+#'   be partially outside the lidar project polygon.
 #' @param shape Character string describing the shape of the sample area in
 #'   the case of point features or the shape applied to the buffer corners
 #'   when using polygon features. Valid values are \code{"square"} or \code{"circle"}.
@@ -399,7 +400,9 @@ fetchUSGSTiles <- function(
 #'   describing the area of interest. Can be points or polygons.
 #' @param crs Valid \code{proj4string} string defining the coordinate
 #'   reference system of \code{(x,y)}. \code{crs} is required when using
-#'   \code{(x,y)}.
+#'   \code{(x,y)}. This can also be a valid \code{SRS_string} for
+#'   use with the sp::CRS() function where it will be provided as the \code{projargs}
+#'   argument. \code{crs} is ignored when \code{aoi} is specified.
 #' @param index Index file for USGS lidar projects. If not provided, an index
 #'   previously specified by a call to \code{fetchUSGSProjectIndex} or
 #'   \code{setUSGSProjectIndex} will be used. If not provided and you have
@@ -430,7 +433,9 @@ fetchUSGSTiles <- function(
 #'   reference system of the returned \code{SpatialPolygonsDataFrame} or
 #'   \code{sf} object. A value of \code{"same"} will project the return object
 #'   to the same coordinate reference system as \code{aoi} or to \code{crs} when
-#'   used with \code{(x,y)}.
+#'   used with \code{(x,y)}. This can also be a valid \code{SRS_string} for
+#'   use with the sp::CRS() function where it will be provided as the \code{projargs}
+#'   argument.
 #' @param dropNAColumns list of column names to test in the index for NA values.
 #'   If any values in any of the columns are NA, the feature will be dropped
 #'   from the index prior to the spatial overlay. Default is to consider all
@@ -448,7 +453,7 @@ fetchUSGSTiles <- function(
 #' @examples
 #' \dontrun{
 #' queryUSGSProjectIndex(-13540901, 5806426, 180, shape = "circle",
-#'   CRS = CRS(SRS_string="EPSG:3857"))
+#'   crs = CRS(SRS_string="EPSG:3857"))
 #'   }
 #' @export
 queryUSGSProjectIndex <- function(
@@ -456,7 +461,7 @@ queryUSGSProjectIndex <- function(
   y,
   buffer = 0,
   shape = "square",
-  aoi = "",
+  aoi = NA,
   crs = "",
   index = "",
   segments = 60,
@@ -472,22 +477,38 @@ queryUSGSProjectIndex <- function(
   rgdal::set_rgdal_show_exportToProj4_warnings(FALSE)
   rgdal::set_thin_PROJ6_warnings(TRUE)
 
-  target <- aoi
-
-  # check object type
   convertTosf <- FALSE
-  if (!inherits(target, "Spatial")) {
-    target <- sf::as_Spatial(target)
-    convertTosf <- TRUE
-  }
+  if (!is.na(aoi)) {
+    target <- aoi
 
-  # transform to web mercator...need to do this before buffer so we can use meters as units
-  targetWebMerc <- sp::spTransform(target,
-      CRS = sp::CRS(SRS_string="EPSG:3857"))
+    # check object type
+    if (!inherits(target, "Spatial")) {
+      target <- sf::as_Spatial(target)
+      convertTosf <- TRUE
+    }
+
+    # transform to web mercator...need to do this before buffer so we can use meters as units
+    targetWebMerc <- sp::spTransform(target,
+        CRS = sp::CRS(SRS_string="EPSG:3857"))
+  } else {
+    targetWebMerc <- ""
+  }
 
   # prepare feature data for query...may be based on point (x,y) or
   # aoi (Spatial* or sf* object)
   targetWebMerc <- prepareTargetData(x, y, buffer, shape, targetWebMerc, crs, segments, returnType)
+
+  if (is.na(aoi)) {
+    # just in case returnType is not "spatial", convert
+    if (!inherits(targetWebMerc, "Spatial")) {
+      targetWebMerc <- sf::as_Spatial(targetWebMerc)
+      convertTosf <- TRUE
+    }
+
+    # have x,y but it could be in a projection other than web mercator
+    targetWebMerc <- sp::spTransform(targetWebMerc,
+                                     CRS = sp::CRS(SRS_string="EPSG:3857"))
+  }
 
   # ***** temp
   #plot(targetWebMerc)
@@ -545,7 +566,7 @@ queryUSGSProjectIndex <- function(
   # if there are any problems with the project shapes, you will get an error
   # might be able to wrap this in try() stmt to gracefully report
   # any problems
-  message("Warning messages from proj4string() regarding comments can be ignored...")
+  message("Warning messages (if any) from proj4string() regarding comments can be ignored...")
   prj <- raster::intersect(targetWebMerc, projectsWebMerc)
 
   # intersect index with AOI...return is AOI shapes with AOI attributes
@@ -633,7 +654,7 @@ queryUSGSProjectIndex <- function(
 #'   describing the area of interest. Can be points or polygons.
 #' @param crs Valid \code{proj4string} string defining the coordinate
 #'   reference system of \code{(x,y)}. \code{crs} is required when using
-#'   \code{(x,y)}.
+#'   \code{(x,y)}. \code{crs} is ignored when \code{aoi} is specified.
 #' @param index Index file for USGS lidar tiles If not provided, an index
 #'   previously specified by a call to \code{fetchUSGSProjectIndex} or
 #'   \code{setUSGSProjectIndex} will be used. If not provided and you have
@@ -683,7 +704,7 @@ queryUSGSTileIndex <- function(
   projectID = "",
   fieldname = "project_id",
   shape = "square",
-  aoi = "",
+  aoi = NA,
   crs = "",
   index = "",
   segments = 60,
@@ -702,22 +723,38 @@ queryUSGSTileIndex <- function(
   rgdal::set_rgdal_show_exportToProj4_warnings(FALSE)
   rgdal::set_thin_PROJ6_warnings(TRUE)
 
-  target <- aoi
-
-  # check object type
   convertTosf <- FALSE
-  if (!inherits(target, "Spatial")) {
-    target <- sf::as_Spatial(target)
-    convertTosf <- TRUE
-  }
+  if (!is.na(aoi)) {
+    target <- aoi
 
-  # transform to web mercator...need to do this before buffer so we can use meters as units
-  targetWebMerc <- sp::spTransform(target,
-                                   CRS = sp::CRS(SRS_string="EPSG:3857"))
+    # check object type
+    if (!inherits(target, "Spatial")) {
+      target <- sf::as_Spatial(target)
+      convertTosf <- TRUE
+    }
+
+    # transform to web mercator...need to do this before buffer so we can use meters as units
+    targetWebMerc <- sp::spTransform(target,
+                                     CRS = sp::CRS(SRS_string="EPSG:3857"))
+  } else {
+    targetWebMerc <- ""
+  }
 
   # prepare feature data for query...may be based on point (x,y) or
   # aoi (Spatial* or sf* object)
   targetWebMerc <- prepareTargetData(x, y, buffer, shape, targetWebMerc, crs, segments, returnType)
+
+  if (is.na(aoi)) {
+    # just in case returnType is not "spatial", convert
+    if (!inherits(targetWebMerc, "Spatial")) {
+      targetWebMerc <- sf::as_Spatial(targetWebMerc)
+      convertTosf <- TRUE
+    }
+
+    # have x,y but it could be in a projection other than web mercator
+    targetWebMerc <- sp::spTransform(targetWebMerc,
+                                     CRS = sp::CRS(SRS_string="EPSG:3857"))
+  }
 
     # ***** temp
   #plot(targetWebMerc)
@@ -791,7 +828,7 @@ queryUSGSTileIndex <- function(
       USGSEnv$USGSTileIndex <- TileIndex
 
       # intersect AOI with index...return is SpatialPolygonsDataFrame
-      message("Warning messages from proj4string() regarding comments can be ignored...")
+      message("Warning messages (if any) from proj4string() regarding comments can be ignored...")
       prj <- raster::intersect(targetWebMerc, tilesWebMerc)
 
       if (length(prj) == 0) {
@@ -959,7 +996,9 @@ clearUSGSTileIndex <- function() {
 #'   describing the area(s) of interest. Can be points or polygons.
 #' @param crs Valid \code{proj4string} string defining the coordinate
 #'   reference system of \code{(x,y)} or \code{aoi}. \code{crs} is required when using
-#'   \code{(x,y)}. It is optional when using \code{aoi}.
+#'   \code{(x,y)}. It is optional when using \code{aoi}. This can also be a valid
+#'   \code{SRS_string} for use with the sp::CRS() function where it will be provided
+#'   as the \code{projargs} argument.
 #' @param segments Number of segments to use when generating a circular
 #'   area of interest. When using a \code{SpatialPoint*} or \code{sf} object
 #'   with \code{shape = "circle"}, set \code{segments} to a rather large value (60

@@ -11,7 +11,7 @@ queryUSGSTileIndex(
   projectID = "",
   fieldname = "project_id",
   shape = "square",
-  aoi = "",
+  aoi = NA,
   crs = "",
   index = "",
   segments = 60,
@@ -54,7 +54,7 @@ describing the area of interest. Can be points or polygons.}
 
 \item{crs}{Valid \code{proj4string} string defining the coordinate
 reference system of \code{(x,y)}. \code{crs} is required when using
-\code{(x,y)}.}
+\code{(x,y)}. \code{crs} is ignored when \code{aoi} is specified.}
 
 \item{index}{Index file for USGS lidar tiles If not provided, an index
 previously specified by a call to \code{fetchUSGSProjectIndex} or

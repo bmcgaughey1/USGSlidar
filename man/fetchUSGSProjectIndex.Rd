@@ -5,7 +5,7 @@
 \title{USGS Lidar Toolkit -- Download Lidar Project Index}
 \usage{
 fetchUSGSProjectIndex(
-  destfile,
+  destfile = "",
   url = "",
   type = "FESM",
   method = "libcurl",

@@ -40,7 +40,9 @@ describing the area(s) of interest. Can be points or polygons.}
 
 \item{crs}{Valid \code{proj4string} string defining the coordinate
 reference system of \code{(x,y)} or \code{aoi}. \code{crs} is required when using
-\code{(x,y)}. It is optional when using \code{aoi}.}
+\code{(x,y)}. It is optional when using \code{aoi}. This can also be a valid
+\code{SRS_string} for use with the sp::CRS() function where it will be provided
+as the \code{projargs} argument.}
 
 \item{segments}{Number of segments to use when generating a circular
 area of interest. When using a \code{SpatialPoint*} or \code{sf} object
