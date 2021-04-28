@@ -1,0 +1,70 @@
+---
+title: "USGSlidar -- Basics"
+author: "Robert J. McGaughey"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{USGSlidar -- Basics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Overall Goal
+
+The USGSlidar package was developed to make it somewhat easy to query the collection of
+lidar data available from the U.S. Geological Survey's 3D Elevation Program (and other sources)
+to find out if data are available for specific locations of interest. The package 
+accesses some of the project and tile index files available from 3DEP and uses them to
+search for data. The package also provides links to lidar data files that can be downloaded
+for free directly from 3DEP servers.
+
+The package also facilitates access to the USGS lidar collection maintained in Entwine format.
+This collection contains a subset of the data available from USGS but it is constantly being
+updated to match the data available in the national map. The index for the Entwine collection
+does not contain detailed project information so there is extra effort required to marry the
+Entwine index with information in the USGS 3DEP collection.
+
+## Packages
+
+These are some libraries that are useful when working with the USGSlidar package. The 
+following packages are loaded with the USGSlidar package:
+* jsonlite
+* PROJ
+* raster
+* RCurl
+* rgdal
+* rgeos
+* sp
+* sf
+* stats
+* urltools
+
+These packages are used for this vignette:
+* mapview
+* RSQLite
+* dplyr
+* tidyverse
+* lubridate
+
+
+```{r setup, echo=T, results='hide', error=F, warning=F, message=F}
+library(rgdal)
+library(sf)
+library(PROJ)
+library(raster)
+library(rgeos)
+library(mapview)
+library(RSQLite)
+library(dplyr)
+library(tidyverse)
+library(lubridate)
+library(USGSlidar)
+```
+

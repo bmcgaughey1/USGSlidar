@@ -1,0 +1,28 @@
+Package: USGSlidar
+Type: Package
+Title: Provides Functions to Access USGS LIDAR Data Collection
+Version: 0.1.0
+Authors@R: person("Bob", "McGaughey", email = "bob.mcgaughey@usda.gov", role = c("aut", "cre"))
+Description: Includes functions to browse the USGS LIDAR data collection,
+    query the collection for coverage for specific locations, and retrieve 
+    tiles covering a location.
+Imports:
+    methods,
+    jsonlite,
+    PROJ,
+    raster,
+    RCurl,
+    rgdal,
+    rgeos,
+    sp,
+    sf,
+    stats,
+    urltools
+License: CC0
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
