@@ -39,8 +39,8 @@ is the same for all objects specified by \code{(x,y)} or \code{aoi}.}
 describing the area(s) of interest. Can be points or polygons.}
 
 \item{crs}{Valid \code{proj4string} string defining the coordinate
-reference system of \code{(x,y)}. \code{crs} is required when using
-\code{(x,y)}.}
+reference system of \code{(x,y)} or \code{aoi}. \code{crs} is required when using
+\code{(x,y)}. It is optional when using \code{aoi}.}
 
 \item{segments}{Number of segments to use when generating a circular
 area of interest. When using a \code{SpatialPoint*} or \code{sf} object
@@ -55,7 +55,8 @@ produce circles with the correct number of segments.}
 \item{returnType}{Character string specifying the object type for the
 polygon object returned by \code{prepareTargetData} when \code{(x,y)} is
 used to specify the area-of-interest. Valid values are \code{"Spatial"}
-or \code{"sf"}. \code{returnType} is ignored when \code{aoi} is specified.}
+or \code{"sf"}. \code{returnType} is ignored when \code{aoi} is specified
+and the return type with match the type of \code{aoi}.}
 }
 \value{
 A set of optionally buffered spatial features. The return type will

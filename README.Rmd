@@ -39,7 +39,7 @@ You can install the released version of USGSlidar from [CRAN](https://CRAN.R-pro
 install.packages("USGSlidar")
 ```
 
-**USGSlidar** is currently available as a development version. The **devtools** package is required to
+**USGSlidar** is currently available as a development version only. The **devtools** package is required to
 install **USGSlidar**. If you have not previously used **devtools**, use the commented line of
 code to install the package. Note that this will also install several additional packages needed
 for devtools. If you do not want the vignettes, set *build_vignettes = FALSE*.

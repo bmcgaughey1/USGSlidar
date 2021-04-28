@@ -32,7 +32,7 @@ You can install the released version of USGSlidar from
 install.packages("USGSlidar")
 ```
 
-**USGSlidar** is currently available as a development version. The
+**USGSlidar** is currently available as a development version only. The
 **devtools** package is required to install **USGSlidar**. If you have
 not previously used **devtools**, use the commented line of code to
 install the package. Note that this will also install several additional
