@@ -68,3 +68,6 @@ library(lubridate)
 library(USGSlidar)
 ```
 
+## Examples
+
+Some text to display
