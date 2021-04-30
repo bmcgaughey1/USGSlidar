@@ -45,9 +45,20 @@ library(USGSlidar)
 
 Using the USGS Entwine data collection, query for coverage for a buffered point location. The Entwine
 data collection is in the web mercator projection (EPSG:3857). The point coordinate is also in the web
-mercator projection. Buffer the point using a circular buffer with a radius of 500m.
+mercator projection. The point is buffered using a circular buffer with a radius of 500m.
 
-The example point is located within the 2014 Glacier Peak lidar acquisition in Washington state.
+The Entwine data collection can be accessed using PDAL to retrieve data for specific areas of interest
+without needing to know the structure of the data (tile arrangement or tile naming). Unfortunately,
+the Entwine index file contains very few details for each acquisition so it is hard to find data for
+specific years. Other USGS data collection contain this information. I have developed R code that
+matches index files from the data hosted on the rockyftp server with the projects in the Entwine
+collection to produce a new index file that can be used with the **USGSlidar** package. However,
+this index is not currently hosted in a location accessible to others. I will make this index and the 
+R code used to create it available soon.
+
+The example point is located within the 2014 Glacier Peak lidar acquisition in Washington state, USA.
+
+**This example will download the [Entwine index](https://raw.githubusercontent.com/hobu/usgs-lidar/master/boundaries/resources.geojson) produced by Howard Butler (4.9Mb) onto the current working directory.**
 
 ```{r fig.height=6, fig.width=6, message=FALSE, warning=FALSE}
 # retrieve the entwine boundary index and store in current directory
@@ -60,7 +71,6 @@ project_polys <- queryUSGSProjectIndex(-13499097
                                        , buffer = 500
                                        , shape = "circle"
                                        , crs = "EPSG:3857"
-#                                       , crs = sp::CRS(SRS_string="EPSG:3857")@projargs
 )
 
 # now query to get the sample area attributed with the project polygon information
@@ -71,14 +81,25 @@ point_poly <- queryUSGSProjectIndex(-13499097
                                     , shape = "circle"
                                     , return = "aoi"
                                     , crs = "EPSG:3857"
-#                                    , crs = sp::CRS(SRS_string="EPSG:3857")@projargs
+)
+
+# finally, query using a point in UTM 10N within the same lidar acquisition to attribute
+# the point with lidar project information. return point will be in web mercator projection.
+point <- queryUSGSProjectIndex(640377.7
+                                , 5330460
+                                , buffer = 0
+                                , shape = "circle"
+                                , return = "aoi"
+                                , crs = "EPSG:26910"
+                                , returncrs = "EPSG:3857"
 )
 
 # display the project area polygon and the buffered point
 ggplot() +
-  ggtitle("2014 Glacier Peak lidar") +
+  ggtitle("2014 Glacier Peak lidar acquisition") +
   annotation_map_tile(type = "osm") +
   layer_spatial(project_polys, fill = "cornsilk", alpha = 0.5) +
+  layer_spatial(point, col = "green", size = 2) +
   annotation_spatial(point_poly, fill = "red")
 ```
 

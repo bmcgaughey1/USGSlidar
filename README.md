@@ -23,13 +23,23 @@ does not contain detailed project information so there is extra effort
 required to marry the Entwine index with information in the USGS 3DEP
 collection.
 
+**This code should be considered experimental. The examples work but
+some options for functions may not work as expected. I have used the
+code for several months but I tend to use it the same way all the time
+so I haven’t fully exercised all of the options for the functions. At
+some point, I will add more tests and clean unp things that don’t
+work.**
+
 ## Installation
 
-You can install the released version of USGSlidar from
-[CRAN](https://CRAN.R-project.org) with:
+This package is only distributed from my GitHub account. It may make it
+to CRAN at some point but no promimses.
+
+~~You can install the released version of USGSlidar from
+[CRAN](https://CRAN.R-project.org) with:~~
 
 ``` r
-install.packages("USGSlidar")
+#install.packages("USGSlidar")
 ```
 
 **USGSlidar** is currently available as a development version only. The

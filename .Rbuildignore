@@ -3,3 +3,6 @@
 
 ^README\.Rmd$
 ^LICENSE\.md$
+^rosm\.cache$
+^doc$
+^Meta$
