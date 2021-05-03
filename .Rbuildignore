@@ -6,3 +6,6 @@
 ^rosm\.cache$
 ^doc$
 ^Meta$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
