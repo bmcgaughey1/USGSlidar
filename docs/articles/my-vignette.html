@@ -75,7 +75,7 @@
       <h1 data-toc-skip>USGSlidar – Basics</h1>
                         <h4 class="author">Robert J. McGaughey</h4>
             
-            <h4 class="date">2021-05-03</h4>
+            <h4 class="date">2021-06-04</h4>
       
       
       <div class="hidden name"><code>my-vignette.Rmd</code></div>
@@ -102,9 +102,9 @@
 <h2 class="hasAnchor">
 <a href="#example-1-query-usgs-entwine-lidar-collection" class="anchor"></a>Example 1 – Query USGS Entwine lidar collection</h2>
 <p>Using the USGS Entwine data collection, query for coverage for a buffered point location. The Entwine data collection is in the web mercator projection (EPSG:3857). The point coordinate is also in the web mercator projection. The point is buffered using a circular buffer with a radius of 500m.</p>
-<p>The Entwine data collection can be accessed using PDAL to retrieve data for specific areas of interest without needing to know the structure of the data (tile arrangement or tile naming). Unfortunately, the Entwine index file contains very few details for each acquisition so it is hard to find data for specific years. Other USGS data collection contain this information. I have developed R code that matches index files from the data hosted on the rockyftp server with the projects in the Entwine collection to produce a new index file that can be used with the <strong>USGSlidar</strong> package. However, this index is not currently hosted in a location accessible to others. I will make this index and the R code used to create it available soon.</p>
+<p>The Entwine data collection can be accessed using PDAL to retrieve data for specific areas of interest without needing to know the structure of the data (tile arrangement or tile naming). Unfortunately, the Entwine index file contains very few details for each acquisition so it is hard to find data for specific years. Other USGS data collection contain this information. I have developed R code that matches index files from the data hosted on the rockyftp server with the projects in the Entwine collection to produce a new index file that can be used with the <strong>USGSlidar</strong> package. This index is hosted <a href="https://raw.githubusercontent.com/bmcgaughey1/EntwineIndex/main/Index/ENTWINEBoundaries.gpkg%22">here</a>. The second example uses this enhanced index.</p>
 <p>The example point is located within the 2014 Glacier Peak lidar acquisition in Washington state, USA.</p>
-<p><strong>This example will download the <a href="https://raw.githubusercontent.com/hobu/usgs-lidar/master/boundaries/resources.geojson">Entwine index</a> produced by Howard Butler (4.9Mb) onto the current working directory.</strong></p>
+<p><strong>This example will download the <a href="https://raw.githubusercontent.com/hobu/usgs-lidar/master/boundaries/resources.geojson">Entwine index</a> produced by Howard Butler into the current working directory.</strong></p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># retrieve the entwine boundary index and store in current directory</span>
 <span class="fu"><a href="../reference/fetchUSGSProjectIndex.html">fetchUSGSProjectIndex</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"ENTWINE"</span><span class="op">)</span>
@@ -149,6 +149,103 @@
   <span class="fu"><a href="https://paleolimbot.github.io/ggspatial/reference/layer_spatial.html">layer_spatial</a></span><span class="op">(</span><span class="va">point</span>, col <span class="op">=</span> <span class="st">"green"</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://paleolimbot.github.io/ggspatial/reference/layer_spatial.html">annotation_spatial</a></span><span class="op">(</span><span class="va">point_poly</span>, fill <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span></code></pre></div>
 <p><img src="my-vignette_files/figure-html/unnamed-chunk-2-1.png" width="576"></p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R">
+<span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="st">"Attributes for the acquistion in the ENTWINE index:\n"</span>,
+    <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">project_polys</span><span class="op">@</span><span class="va">data</span><span class="op">)</span>, collapse<span class="op">=</span> <span class="st">"\n "</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; Attributes for the acquistion in the ENTWINE index:</span>
+<span class="co">#&gt;  name</span>
+<span class="co">#&gt;  id</span>
+<span class="co">#&gt;  count</span>
+<span class="co">#&gt;  url</span></code></pre></div>
+</div>
+<div id="example-2-query-usgs-entwine-lidar-collection-using-enhanced-entwine-index" class="section level2">
+<h2 class="hasAnchor">
+<a href="#example-2-query-usgs-entwine-lidar-collection-using-enhanced-entwine-index" class="anchor"></a>Example 2 – Query USGS Entwine lidar collection using enhanced ENTWINE index</h2>
+<p>This example is identical to Example 1 except it uses the enhanced index for ENTWINE data that includes information about the acquisition including the start and end dates for data collection. Using this index, you can search for data covering specific dates for a given location.</p>
+<p><strong>This example will download the <a href="https://raw.githubusercontent.com/bmcgaughey1/EntwineIndex/main/Index/ENTWINEBoundaries.gpkg">Enhanced Entwine index</a> produced by Robert J. McGaughey into the current working directory.</strong></p>
+<p>Be sure to look at the output below the map to see the additional columns of information available in the enhanced index.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># retrieve the enhanced entwine boundary index and store in current directory</span>
+<span class="fu"><a href="../reference/fetchUSGSProjectIndex.html">fetchUSGSProjectIndex</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"ENTWINEPLUS"</span><span class="op">)</span>
+
+<span class="co"># query to find the project polygon(s) that covers the buffered point</span>
+<span class="co"># the return value is the project area polygon(s) that intersect buffered point</span>
+<span class="va">project_polys</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/queryUSGSProjectIndex.html">queryUSGSProjectIndex</a></span><span class="op">(</span><span class="op">-</span><span class="fl">13499097</span>
+                                       , <span class="fl">6139669</span>
+                                       , buffer <span class="op">=</span> <span class="fl">500</span>
+                                       , shape <span class="op">=</span> <span class="st">"circle"</span>
+                                       , crs <span class="op">=</span> <span class="st">"EPSG:3857"</span>
+<span class="op">)</span>
+
+<span class="co"># now query to get the sample area attributed with the project polygon information</span>
+<span class="co"># this is the same call as above but with return="aoi"</span>
+<span class="va">point_poly</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/queryUSGSProjectIndex.html">queryUSGSProjectIndex</a></span><span class="op">(</span><span class="op">-</span><span class="fl">13499097</span>
+                                    , <span class="fl">6139669</span>
+                                    , buffer <span class="op">=</span> <span class="fl">500</span>
+                                    , shape <span class="op">=</span> <span class="st">"circle"</span>
+                                    , return <span class="op">=</span> <span class="st">"aoi"</span>
+                                    , crs <span class="op">=</span> <span class="st">"EPSG:3857"</span>
+<span class="op">)</span>
+<span class="co">#&gt; Using pre-loaded project index</span>
+
+<span class="co"># finally, query using a point in UTM 10N within the same lidar acquisition to attribute</span>
+<span class="co"># the point with lidar project information. return point will be in web mercator projection.</span>
+<span class="va">point</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/queryUSGSProjectIndex.html">queryUSGSProjectIndex</a></span><span class="op">(</span><span class="fl">640377.7</span>
+                                , <span class="fl">5330460</span>
+                                , buffer <span class="op">=</span> <span class="fl">0</span>
+                                , shape <span class="op">=</span> <span class="st">"circle"</span>
+                                , return <span class="op">=</span> <span class="st">"aoi"</span>
+                                , crs <span class="op">=</span> <span class="st">"EPSG:26910"</span>
+                                , returncrs <span class="op">=</span> <span class="st">"EPSG:3857"</span>
+<span class="op">)</span>
+<span class="co">#&gt; Using pre-loaded project index</span>
+
+<span class="co"># display the project area polygon and the buffered point</span>
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span><span class="op">(</span><span class="st">"2014 Glacier Peak lidar acquisition"</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://paleolimbot.github.io/ggspatial/reference/annotation_map_tile.html">annotation_map_tile</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"osm"</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://paleolimbot.github.io/ggspatial/reference/layer_spatial.html">layer_spatial</a></span><span class="op">(</span><span class="va">project_polys</span>, fill <span class="op">=</span> <span class="st">"cornsilk"</span>, alpha <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://paleolimbot.github.io/ggspatial/reference/layer_spatial.html">layer_spatial</a></span><span class="op">(</span><span class="va">point</span>, col <span class="op">=</span> <span class="st">"green"</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://paleolimbot.github.io/ggspatial/reference/layer_spatial.html">annotation_spatial</a></span><span class="op">(</span><span class="va">point_poly</span>, fill <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span></code></pre></div>
+<p><img src="my-vignette_files/figure-html/unnamed-chunk-3-1.png" width="576"></p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R">
+<span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="st">"Attributes for the acquistion in the enhanced ENTWINE index:\n"</span>,
+    <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">project_polys</span><span class="op">@</span><span class="va">data</span><span class="op">)</span>, collapse<span class="op">=</span> <span class="st">"\n "</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; Attributes for the acquistion in the enhanced ENTWINE index:</span>
+<span class="co">#&gt;  name</span>
+<span class="co">#&gt;  id</span>
+<span class="co">#&gt;  count</span>
+<span class="co">#&gt;  url</span>
+<span class="co">#&gt;  ENTpid</span>
+<span class="co">#&gt;  SEQ</span>
+<span class="co">#&gt;  MatchMethod</span>
+<span class="co">#&gt;  workunit</span>
+<span class="co">#&gt;  workunit_id</span>
+<span class="co">#&gt;  workpackage</span>
+<span class="co">#&gt;  workpackage_id</span>
+<span class="co">#&gt;  collect_start</span>
+<span class="co">#&gt;  collect_end</span>
+<span class="co">#&gt;  ql</span>
+<span class="co">#&gt;  spec</span>
+<span class="co">#&gt;  p_method</span>
+<span class="co">#&gt;  dem_gsd_meters</span>
+<span class="co">#&gt;  horiz_crs</span>
+<span class="co">#&gt;  vert_crs</span>
+<span class="co">#&gt;  lpc_pub_date</span>
+<span class="co">#&gt;  lpc_category</span>
+<span class="co">#&gt;  lpc_reason</span>
+<span class="co">#&gt;  opr_pub_date</span>
+<span class="co">#&gt;  opr_category</span>
+<span class="co">#&gt;  opr_reason</span>
+<span class="co">#&gt;  onemeter_category</span>
+<span class="co">#&gt;  onemeter_reason</span>
+<span class="co">#&gt;  seamless_category</span>
+<span class="co">#&gt;  seamless_reason</span>
+<span class="co">#&gt;  lpc_link</span>
+<span class="co">#&gt;  opr_link</span>
+<span class="co">#&gt;  metadata_link</span></code></pre></div>
 </div>
 </div>
   </div>

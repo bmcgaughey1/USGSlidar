@@ -81,7 +81,7 @@ fetchFile <- function(
 #'   is used, the URL for the USGS Entwine data index maintained by Howard
 #'   Butler is used.
 #' @param type A character string specifying the index to use. Valid values
-#'   are \code{"WESM"}, \code{"FESM"}, or \code{"ENTWINE"}.
+#'   are \code{"WESM"}, \code{"FESM"}, \code{"ENTWINE"}, or \code{"ENTWINEPLUS"}.
 #' @param method Method used with \code{download.file()}.  Refer to \code{download.file()}
 #'   documentation for possible methods.
 #' @param ... Additional arguments passed to \code{download.file()}.
@@ -110,8 +110,12 @@ fetchUSGSProjectIndex <- function(
       url <- "ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/Elevation/metadata/WESM.gpkg"
     } else if (tolower(type) == "entwine") {
       url <- "https://raw.githubusercontent.com/hobu/usgs-lidar/master/boundaries/resources.geojson"
+    } else if (tolower(type) == "entwineplus") {
+      url <- "https://raw.githubusercontent.com/bmcgaughey1/EntwineIndex/main/Index/ENTWINEBoundaries.gpkg"
+    } else {
+      stop("Invalid value for type.")
     }
-  }
+}
 
   # sort out the destination file
   if (destfile == "") {

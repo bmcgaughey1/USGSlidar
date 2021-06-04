@@ -25,7 +25,7 @@ is used, the URL for the USGS Entwine data index maintained by Howard
 Butler is used.}
 
 \item{type}{A character string specifying the index to use. Valid values
-are \code{"WESM"}, \code{"FESM"}, or \code{"ENTWINE"}.}
+are \code{"WESM"}, \code{"FESM"}, \code{"ENTWINE"}, or \code{"ENTWINEPLUS"}.}
 
 \item{method}{Method used with \code{download.file()}.  Refer to \code{download.file()}
 documentation for possible methods.}

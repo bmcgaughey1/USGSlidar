@@ -52,13 +52,12 @@ without needing to know the structure of the data (tile arrangement or tile nami
 the Entwine index file contains very few details for each acquisition so it is hard to find data for
 specific years. Other USGS data collection contain this information. I have developed R code that
 matches index files from the data hosted on the rockyftp server with the projects in the Entwine
-collection to produce a new index file that can be used with the **USGSlidar** package. However,
-this index is not currently hosted in a location accessible to others. I will make this index and the 
-R code used to create it available soon.
+collection to produce a new index file that can be used with the **USGSlidar** package. This index
+is hosted [here](https://raw.githubusercontent.com/bmcgaughey1/EntwineIndex/main/Index/ENTWINEBoundaries.gpkg"). The second example uses this enhanced index.
 
 The example point is located within the 2014 Glacier Peak lidar acquisition in Washington state, USA.
 
-**This example will download the [Entwine index](https://raw.githubusercontent.com/hobu/usgs-lidar/master/boundaries/resources.geojson) produced by Howard Butler (4.9Mb) onto the current working directory.**
+**This example will download the [Entwine index](https://raw.githubusercontent.com/hobu/usgs-lidar/master/boundaries/resources.geojson) produced by Howard Butler into the current working directory.**
 
 ```{r fig.height=6, fig.width=6, message=FALSE, warning=FALSE}
 # retrieve the entwine boundary index and store in current directory
@@ -101,5 +100,64 @@ ggplot() +
   layer_spatial(project_polys, fill = "cornsilk", alpha = 0.5) +
   layer_spatial(point, col = "green", size = 2) +
   annotation_spatial(point_poly, fill = "red")
+
+cat("Attributes for the acquistion in the ENTWINE index:\n",
+    paste(paste(colnames(project_polys@data), collapse= "\n "), "\n"))
 ```
 
+## Example 2 -- Query USGS Entwine lidar collection using enhanced ENTWINE index
+
+This example is identical to Example 1 except it uses the enhanced index for ENTWINE data that includes
+information about the acquisition including the start and end dates for data collection. Using this
+index, you can search for data covering specific dates for a given location.
+
+**This example will download the [Enhanced Entwine index](https://raw.githubusercontent.com/bmcgaughey1/EntwineIndex/main/Index/ENTWINEBoundaries.gpkg) produced by Robert J. McGaughey into the current working directory.**
+
+Be sure to look at the output below the map to see the additional columns of information available
+in the enhanced index.
+
+```{r fig.height=6, fig.width=6, message=FALSE, warning=FALSE}
+# retrieve the enhanced entwine boundary index and store in current directory
+fetchUSGSProjectIndex(type = "ENTWINEPLUS")
+
+# query to find the project polygon(s) that covers the buffered point
+# the return value is the project area polygon(s) that intersect buffered point
+project_polys <- queryUSGSProjectIndex(-13499097
+                                       , 6139669
+                                       , buffer = 500
+                                       , shape = "circle"
+                                       , crs = "EPSG:3857"
+)
+
+# now query to get the sample area attributed with the project polygon information
+# this is the same call as above but with return="aoi"
+point_poly <- queryUSGSProjectIndex(-13499097
+                                    , 6139669
+                                    , buffer = 500
+                                    , shape = "circle"
+                                    , return = "aoi"
+                                    , crs = "EPSG:3857"
+)
+
+# finally, query using a point in UTM 10N within the same lidar acquisition to attribute
+# the point with lidar project information. return point will be in web mercator projection.
+point <- queryUSGSProjectIndex(640377.7
+                                , 5330460
+                                , buffer = 0
+                                , shape = "circle"
+                                , return = "aoi"
+                                , crs = "EPSG:26910"
+                                , returncrs = "EPSG:3857"
+)
+
+# display the project area polygon and the buffered point
+ggplot() +
+  ggtitle("2014 Glacier Peak lidar acquisition") +
+  annotation_map_tile(type = "osm") +
+  layer_spatial(project_polys, fill = "cornsilk", alpha = 0.5) +
+  layer_spatial(point, col = "green", size = 2) +
+  annotation_spatial(point_poly, fill = "red")
+
+cat("Attributes for the acquistion in the enhanced ENTWINE index:\n",
+    paste(paste(colnames(project_polys@data), collapse= "\n "), "\n"))
+```
