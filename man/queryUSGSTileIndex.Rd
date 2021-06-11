@@ -9,9 +9,9 @@ queryUSGSTileIndex(
   y,
   buffer = 0,
   projectID = "",
-  fieldname = "project_id",
+  fieldname = "workunit_id",
   shape = "square",
-  aoi = NA,
+  aoi = NULL,
   crs = "",
   index = "",
   segments = 60,
@@ -103,7 +103,10 @@ A \code{SpatialPolygonsDataFrame} or \code{sf} object containing
 \description{
 Intersect a set of features (points or polygons) against a lidar
 tile index to determine which tiles are needed to provide coverage for the
-features.
+features. This is both a spatial overlay operation and a database query.
+The database query is used to limit the features used for the spatial
+overlay. This dramatically increases the speed of the query when the
+area of interest only involves a few lidar projects.
 }
 \details{
 Query the tile index to find tiles that intersect the \code{buffer}ed

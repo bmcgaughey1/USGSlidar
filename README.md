@@ -27,13 +27,12 @@ collection.
 some options for functions may not work as expected. I have used the
 code for several months but I tend to use it the same way all the time
 so I haven’t fully exercised all of the options for the functions. At
-some point, I will add more tests and clean unp things that don’t
-work.**
+some point, I will add more tests and clean up things that don’t work.**
 
 ## Installation
 
 This package is only distributed from my GitHub account. It may make it
-to CRAN at some point but no promimses.
+to CRAN at some point but no promises.
 
 ~~You can install the released version of USGSlidar from
 [CRAN](https://CRAN.R-project.org) with:~~

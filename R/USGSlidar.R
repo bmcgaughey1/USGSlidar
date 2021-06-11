@@ -360,7 +360,8 @@ fetchUSGSTiles <- function(
 #'
 #' Intersect a set of features (points or polygons) against a lidar
 #' project index to determine which projects provide coverage for the
-#' features.
+#' features. This is purely a spatial overlay operation and does not
+#' use the attribute data associated with the index.
 #'
 #' @details Finds all USGS lidar projects that cover the area-of-interest
 #'   and associates the polygon attributes with those of the input object(s)
@@ -465,7 +466,7 @@ queryUSGSProjectIndex <- function(
   y,
   buffer = 0,
   shape = "square",
-  aoi = NA,
+  aoi = NULL,
   crs = "",
   index = "",
   segments = 60,
@@ -482,7 +483,7 @@ queryUSGSProjectIndex <- function(
   rgdal::set_thin_PROJ6_warnings(TRUE)
 
   convertTosf <- FALSE
-  if (!is.na(aoi)) {
+  if (!is.null(aoi)) {
     target <- aoi
 
     # check object type
@@ -502,7 +503,7 @@ queryUSGSProjectIndex <- function(
   # aoi (Spatial* or sf* object)
   targetWebMerc <- prepareTargetData(x, y, buffer, shape, targetWebMerc, crs, segments, returnType)
 
-  if (is.na(aoi)) {
+  if (is.null(aoi)) {
     # just in case returnType is not "spatial", convert
     if (!inherits(targetWebMerc, "Spatial")) {
       targetWebMerc <- sf::as_Spatial(targetWebMerc)
@@ -628,7 +629,10 @@ queryUSGSProjectIndex <- function(
 #'
 #' Intersect a set of features (points or polygons) against a lidar
 #' tile index to determine which tiles are needed to provide coverage for the
-#' features.
+#' features. This is both a spatial overlay operation and a database query.
+#' The database query is used to limit the features used for the spatial
+#' overlay. This dramatically increases the speed of the query when the
+#' area of interest only involves a few lidar projects.
 #'
 #' @details Query the tile index to find tiles that intersect the \code{buffer}ed
 #'   \code{(x,y)} point(s) or \code{buffer}ed feature(s) provided in \code{aoi}.
@@ -706,9 +710,9 @@ queryUSGSTileIndex <- function(
   y,
   buffer = 0,
   projectID = "",
-  fieldname = "project_id",
+  fieldname = "workunit_id",
   shape = "square",
-  aoi = NA,
+  aoi = NULL,
   crs = "",
   index = "",
   segments = 60,
@@ -728,7 +732,7 @@ queryUSGSTileIndex <- function(
   rgdal::set_thin_PROJ6_warnings(TRUE)
 
   convertTosf <- FALSE
-  if (!is.na(aoi)) {
+  if (!is.null(aoi)) {
     target <- aoi
 
     # check object type
@@ -748,7 +752,7 @@ queryUSGSTileIndex <- function(
   # aoi (Spatial* or sf* object)
   targetWebMerc <- prepareTargetData(x, y, buffer, shape, targetWebMerc, crs, segments, returnType)
 
-  if (is.na(aoi)) {
+  if (is.null(aoi)) {
     # just in case returnType is not "spatial", convert
     if (!inherits(targetWebMerc, "Spatial")) {
       targetWebMerc <- sf::as_Spatial(targetWebMerc)

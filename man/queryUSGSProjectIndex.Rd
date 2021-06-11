@@ -9,7 +9,7 @@ queryUSGSProjectIndex(
   y,
   buffer = 0,
   shape = "square",
-  aoi = NA,
+  aoi = NULL,
   crs = "",
   index = "",
   segments = 60,
@@ -120,7 +120,8 @@ A \code{SpatialPolygonsDataFrame} or \code{sf} object containing project
 \description{
 Intersect a set of features (points or polygons) against a lidar
 project index to determine which projects provide coverage for the
-features.
+features. This is purely a spatial overlay operation and does not
+use the attribute data associated with the index.
 }
 \details{
 Finds all USGS lidar projects that cover the area-of-interest
