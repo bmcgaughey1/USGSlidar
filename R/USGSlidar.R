@@ -1630,7 +1630,7 @@ buildPDALPipelineENTWINE <- function(
   verbose = 0
 ) {
   # -------------------------------------------------------------------------------------------------
-  #                        Create a PDAL pipeline to retrieve data from the ENTWINE collection
+  # Create a PDAL pipeline to retrieve data from the ENTWINE collection
   # -------------------------------------------------------------------------------------------------
   #
   # Idea is to modify an exiting pipeline file to populate the ept_reader:bounds,
