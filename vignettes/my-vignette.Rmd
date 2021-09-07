@@ -22,13 +22,13 @@ The USGSlidar package was developed to make it somewhat easy to query the collec
 lidar data available from the U.S. Geological Survey's 3D Elevation Program (and other sources)
 to find out if data are available for specific locations of interest. The package 
 accesses some of the project and tile index files available from 3DEP and uses them to
-search for data. The package also provides links to lidar data files that can be downloaded
+search for data. The package provides links to lidar data files that can be downloaded
 for free directly from 3DEP servers.
 
 The package also facilitates access to the USGS lidar collection maintained in Entwine format.
 This collection contains a subset of the data available from USGS but it is constantly being
 updated to match the data available in the national map. The index for the Entwine collection
-does not contain detailed project information so there is extra effort required to marry the
+does not contain detailed project information so there is extra effort required to merge the
 Entwine index with information in the USGS 3DEP collection.
 
 ## Packages
@@ -50,10 +50,10 @@ mercator projection. The point is buffered using a circular buffer with a radius
 The Entwine data collection can be accessed using PDAL to retrieve data for specific areas of interest
 without needing to know the structure of the data (tile arrangement or tile naming). Unfortunately,
 the Entwine index file contains very few details for each acquisition so it is hard to find data for
-specific years. Other USGS data collection contain this information. I have developed R code that
-matches index files from the data hosted on the rockyftp server with the projects in the Entwine
+specific years. Other USGS data collections contain this information. I have developed R code that
+matches index files from the data hosted on the rockyweb server with the projects in the Entwine
 collection to produce a new index file that can be used with the **USGSlidar** package. This index
-is hosted [here](https://raw.githubusercontent.com/bmcgaughey1/EntwineIndex/main/Index/ENTWINEBoundaries.gpkg"). The second example uses this enhanced index.
+is hosted [here](https://raw.githubusercontent.com/bmcgaughey1/EntwineIndex/main/Index/ENTWINEBoundaries.gpkg). The second example uses this enhanced index.
 
 The example point is located within the 2014 Glacier Peak lidar acquisition in Washington state, USA.
 

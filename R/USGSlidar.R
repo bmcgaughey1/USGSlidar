@@ -105,9 +105,16 @@ fetchUSGSProjectIndex <- function(
   if (url == "") {
     if (tolower(type) == "fesm") {
       # this is the old index last updated in May 2020
-      url <- "ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/FullExtentSpatialMetadata/FESM_LPC_Proj.gpkg"
+      #url <- "ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/FullExtentSpatialMetadata/FESM_LPC_Proj.gpkg"
+
+      # updated to rockyweb server
+      url <- "https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/FullExtentSpatialMetadata/FESM_LPC_PROJ.gpkg"
     } else if (tolower(type) == "wesm") {
-      url <- "ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/Elevation/metadata/WESM.gpkg"
+      # old FTP server
+      #url <- "ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/Elevation/metadata/WESM.gpkg"
+
+      # new web server
+      url <- "https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/metadata/WESM.gpkg"
     } else if (tolower(type) == "entwine") {
       url <- "https://raw.githubusercontent.com/hobu/usgs-lidar/master/boundaries/resources.geojson"
     } else if (tolower(type) == "entwineplus") {
@@ -115,6 +122,8 @@ fetchUSGSProjectIndex <- function(
     } else {
       stop("Invalid value for type.")
     }
+    # https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/metadata/WESM.gpkg
+    # https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/
 }
 
   # sort out the destination file
@@ -215,8 +224,13 @@ fetchUSGSTileIndex <- function(
   ...
 ) {
   # sort out the URL
-  if (url == "")
-    url <- "ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/FullExtentSpatialMetadata/FESM_LPC_TILE.gpkg"
+  if (url == "") {
+    # old tile index
+    #url <- "ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/FullExtentSpatialMetadata/FESM_LPC_TILE.gpkg"
+
+    # new index
+    url <- "https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/FullExtentSpatialMetadata/LPC_TESM.gpkg"
+  }
 
   # sort out the destination file
   if (destfile == "") {
