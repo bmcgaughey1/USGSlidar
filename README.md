@@ -21,7 +21,13 @@ data available from USGS but it is constantly being updated to match the
 data available in the national map. The index for the Entwine collection
 does not contain detailed project information so there is extra effort
 required to marry the Entwine index with information in the USGS 3DEP
-collection.
+collection. I also maintain a companion repository
+[EntwineIndex](https://github.com/bmcgaughey1/EntwineIndex) that merges
+the Entwine index created and maintained by Howard Butler
+[USGS-lidar](https://github.com/hobu/usgs-lidar) with the USGS project
+index to add project information to the Entwine index. My enhanced
+Entwine index can be accesses by setting type = “entwineplus” in the
+call to fetchUSGSProjectIndex().
 
 **This code should be considered experimental. The examples work but
 some options for functions may not work as expected. I have used the
