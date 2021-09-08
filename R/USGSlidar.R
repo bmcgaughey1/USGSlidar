@@ -459,12 +459,12 @@ fetchUSGSTiles <- function(
 #'   to the same coordinate reference system as \code{aoi} or to \code{crs} when
 #'   used with \code{(x,y)}. This can also be a valid \code{SRS_string} for
 #'   use with the sp::CRS() function where it will be provided as the \code{projargs}
-#'   argument. THIS OPTION IS NOT YET IMPLEMENTED.
+#'   argument.
 #' @param lidarOnly Boolean indicating that only lidar projects should be considered
 #'   for the spatial overlay. For the USGS WESM index, setting \code{lidarOnly = TRUE}
 #'   will include projects with the following values for the collection method:
 #'   linear-mode lidar, Bathymetric LIDAR, Topobathymetric LIDAR, Geiger-mode LIDAR,
-#'   Single Photon LIDAR.
+#'   Single Photon LIDAR. THIS OPTION IS NOT YET IMPLEMENTED.
 #' @param dropNAColumns list of column names to test in the index for NA values.
 #'   If any values in any of the columns are NA, the feature will be dropped
 #'   from the index prior to the spatial overlay. Default is to consider all

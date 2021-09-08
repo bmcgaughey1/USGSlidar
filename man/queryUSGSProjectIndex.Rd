@@ -102,11 +102,8 @@ argument.}
 \item{lidarOnly}{Boolean indicating that only lidar projects should be considered
 for the spatial overlay. For the USGS WESM index, setting \code{lidarOnly = TRUE}
 will include projects with the following values for the collection method:
-  * linear-mode lidar
-  * Bathymetric LIDAR
-  * Topobathymetric LIDAR
-  * Geiger-mode LIDAR
-  * Single Photon LIDAR}
+linear-mode lidar, Bathymetric LIDAR, Topobathymetric LIDAR, Geiger-mode LIDAR,
+Single Photon LIDAR. THIS OPTION IS NOT YET IMPLEMENTED.}
 
 \item{dropNAColumns}{list of column names to test in the index for NA values.
 If any values in any of the columns are NA, the feature will be dropped
