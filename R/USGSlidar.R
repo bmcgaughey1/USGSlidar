@@ -22,6 +22,7 @@ USGSEnv <- new.env(parent = emptyenv())
 USGSEnv$USGSProjectIndex <- ""
 USGSEnv$USGSTileIndex <- ""
 USGSEnv$USGSLoadedProjectIndex <- ""
+USGSEnv$USGSLoadedProjectIndexIsLidarOnly <- NA
 USGSEnv$USGSProjectsWebMerc <- ""
 
 # ---------- fetchFile
@@ -76,10 +77,11 @@ fetchFile <- function(
 #'   working directory using the filename in the url.
 #' @param url A character string with the URL for the project index file. If an empty
 #'   string, the URL for the project index corresponding \code{type} is fetched.
-#'   When \code{type = "FESM"}, the URL for FESM_LPC_Proj.gpkg is used. When
-#'   \code{type = "WESM"}, the URL for WESM.gpkg is used. When \code{type = "ENTWINE"}
-#'   is used, the URL for the USGS Entwine data index maintained by Howard
-#'   Butler is used.
+#'   When \code{type = "FESM"}, the URL for FESM_LPC_PROJ.gpkg is used. The FESM index
+#'   has not been updated since May 2020. The WESM index should be used for nearly all work.
+#'   When \code{type = "WESM"}, the URL for WESM.gpkg is used.
+#'   When \code{type = "ENTWINE"} is used, the URL for the USGS Entwine data index
+#'   maintained by Howard Butler is used.
 #' @param type A character string specifying the index to use. Valid values
 #'   are \code{"WESM"}, \code{"FESM"}, \code{"ENTWINE"}, or \code{"ENTWINEPLUS"}.
 #' @param method Method used with \code{download.file()}.  Refer to \code{download.file()}
@@ -141,6 +143,7 @@ fetchUSGSProjectIndex <- function(
     # successful...save the local file for later use
     USGSEnv$USGSProjectIndex <- destfile
     USGSEnv$USGSLoadedProjectIndex <- ""
+    USGSEnv$USGSLoadedProjectIndexIsLidarOnly <- NA
     USGSEnv$USGSProjectsWebMerc <- ""
   } else {
     # not successful...clear local file
@@ -176,11 +179,13 @@ setUSGSProjectIndex <- function(
       cat("Project index file: ", index, " activated and ready for query")
       USGSEnv$USGSProjectIndex <- index
       USGSEnv$USGSLoadedProjectIndex <- ""
+      USGSEnv$USGSLoadedProjectIndexIsLidarOnly <- NA
       USGSEnv$USGSProjectsWebMerc <- ""
       invisible(0)
     } else {
       USGSEnv$USGSProjectIndex <- ""
       USGSEnv$USGSLoadedProjectIndex <- ""
+      USGSEnv$USGSLoadedProjectIndexIsLidarOnly <- NA
       USGSEnv$USGSProjectsWebMerc <- ""
       stop(paste("Project index file:", index, "does not exist."))
     }
@@ -225,7 +230,7 @@ fetchUSGSTileIndex <- function(
 ) {
   # sort out the URL
   if (url == "") {
-    # old tile index
+    # old tile index last updated 7/27/2021
     #url <- "ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/FullExtentSpatialMetadata/FESM_LPC_TILE.gpkg"
 
     # new index
@@ -454,7 +459,12 @@ fetchUSGSTiles <- function(
 #'   to the same coordinate reference system as \code{aoi} or to \code{crs} when
 #'   used with \code{(x,y)}. This can also be a valid \code{SRS_string} for
 #'   use with the sp::CRS() function where it will be provided as the \code{projargs}
-#'   argument.
+#'   argument. THIS OPTION IS NOT YET IMPLEMENTED.
+#' @param lidarOnly Boolean indicating that only lidar projects should be considered
+#'   for the spatial overlay. For the USGS WESM index, setting \code{lidarOnly = TRUE}
+#'   will include projects with the following values for the collection method:
+#'   linear-mode lidar, Bathymetric LIDAR, Topobathymetric LIDAR, Geiger-mode LIDAR,
+#'   Single Photon LIDAR.
 #' @param dropNAColumns list of column names to test in the index for NA values.
 #'   If any values in any of the columns are NA, the feature will be dropped
 #'   from the index prior to the spatial overlay. Default is to consider all
@@ -487,6 +497,7 @@ queryUSGSProjectIndex <- function(
   return = "index",
   returnType = "Spatial",
   returncrs = "same",
+  lidarOnly = TRUE,
   dropNAColumns = NULL,
   clean = TRUE,
   ...
@@ -545,12 +556,22 @@ queryUSGSProjectIndex <- function(
     }
   }
 
+#  if (USGSEnv$USGSLoadedProjectIndex == "" || USGSEnv$USGSLoadedProjectIndexIsLidarOnly != lidarOnly) {
   if (USGSEnv$USGSLoadedProjectIndex == "") {
-    # load the project index...default behavior is to read the first layer
+      # load the project index...default behavior is to read the first layer
     # might have to add call to st_layers() to get list of layers and then
     # read the first or let user add a layer name
-    # USGS files only have 1 layer as of 6/29/2020
+    # USGS WESM files only have 1 layer as of 9/7/2021
     projects <- rgdal::readOGR(dsn = index, verbose = F, stringsAsFactors = FALSE)
+
+    # filter for lidar-only projects
+    # if (lidarOnly) {
+    #   projects <- projects[projects@data$p_method == "linear-mode lidar" |
+    #                          projects@data$p_method == "Bathymetric LIDAR" |
+    #                          projects@data$p_method == "Topobathymetric LIDAR" |
+    #                          projects@data$p_method == "Geiger-mode LIDAR" |
+    #                          projects@data$p_method == "Single Photon LIDAR", ]
+    # }
 
     # transform to web mercator
     projectsWebMerc <- sp::spTransform(projects,
@@ -559,6 +580,7 @@ queryUSGSProjectIndex <- function(
     # we have loaded the index...save it for subsequent use
     USGSEnv$USGSLoadedProjectIndex <- index
     USGSEnv$USGSProjectsWebMerc <- projectsWebMerc
+    USGSEnv$USGSLoadedProjectIndexIsLidarOnly <- lidarOnly
   } else {
     cat("Using pre-loaded project index\r\n")
     projectsWebMerc <- USGSEnv$USGSProjectsWebMerc
@@ -567,7 +589,7 @@ queryUSGSProjectIndex <- function(
   # if dropNAColumns is valid, check for and remove and features that have NA
   # values in any columns listed in dropNAColumns
   if (length(dropNAColumns) > 0) {
-    projectsWebMerc <- projectsWebMerc[complete.cases(projectsWebMerc[, dropNAColumns]), ]
+    projectsWebMerc <- projectsWebMerc[stats::complete.cases(projectsWebMerc[, dropNAColumns]), ]
   }
 
   rgeos::gIsValid(projectsWebMerc)
@@ -935,6 +957,7 @@ clearUSGSProjectIndex <- function() {
   USGSEnv$USGSLoadedProjectIndex <- ""
 #  rm(USGSProjectsWebMerc, envir = USGSEnv)
   USGSEnv$USGSProjectsWebMerc <- ""
+  USGSEnv$USGSLoadedProjectIndexIsLidarOnly <- NA
   invisible(0)
 }
 
@@ -1034,7 +1057,7 @@ clearUSGSTileIndex <- function() {
 #'   polygon object returned by \code{prepareTargetData} when \code{(x,y)} is
 #'   used to specify the area-of-interest. Valid values are \code{"Spatial"}
 #'   or \code{"sf"}. \code{returnType} is ignored when \code{aoi} is specified
-#'   and the return type with match the type of \code{aoi}.
+#'   and the return type will match the object type of \code{aoi}.
 #' @return A set of optionally buffered spatial features. The return type will
 #'   be the same as the \code{aoi} type. When \code{(x,y)} is used,
 #'   \code{returnType} specifies the object type returned by \code{prepareTargetData}.

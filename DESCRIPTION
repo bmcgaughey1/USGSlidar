@@ -25,5 +25,7 @@ LazyData: true
 RoxygenNote: 7.1.1
 Suggests: 
     knitr,
+    ggplot2,
+    ggspatial,
     rmarkdown
 VignetteBuilder: knitr

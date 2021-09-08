@@ -58,7 +58,7 @@ produce circles with the correct number of segments.}
 polygon object returned by \code{prepareTargetData} when \code{(x,y)} is
 used to specify the area-of-interest. Valid values are \code{"Spatial"}
 or \code{"sf"}. \code{returnType} is ignored when \code{aoi} is specified
-and the return type with match the type of \code{aoi}.}
+and the return type will match the object type of \code{aoi}.}
 }
 \value{
 A set of optionally buffered spatial features. The return type will

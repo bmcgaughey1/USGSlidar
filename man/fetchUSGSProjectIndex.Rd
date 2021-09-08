@@ -19,10 +19,11 @@ working directory using the filename in the url.}
 
 \item{url}{A character string with the URL for the project index file. If an empty
 string, the URL for the project index corresponding \code{type} is fetched.
-When \code{type = "FESM"}, the URL for FESM_LPC_Proj.gpkg is used. When
-\code{type = "WESM"}, the URL for WESM.gpkg is used. When \code{type = "ENTWINE"}
-is used, the URL for the USGS Entwine data index maintained by Howard
-Butler is used.}
+When \code{type = "FESM"}, the URL for FESM_LPC_PROJ.gpkg is used. The FESM index
+has not been updated since May 2020. The WESM index should be used for nearly all work.
+When \code{type = "WESM"}, the URL for WESM.gpkg is used.
+When \code{type = "ENTWINE"} is used, the URL for the USGS Entwine data index
+maintained by Howard Butler is used.}
 
 \item{type}{A character string specifying the index to use. Valid values
 are \code{"WESM"}, \code{"FESM"}, \code{"ENTWINE"}, or \code{"ENTWINEPLUS"}.}
