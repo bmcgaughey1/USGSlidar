@@ -7,7 +7,7 @@
 fetchUSGSProjectIndex(
   destfile = "",
   url = "",
-  type = "FESM",
+  type = "WESM",
   method = "libcurl",
   ...
 )
@@ -21,9 +21,11 @@ working directory using the filename in the url.}
 string, the URL for the project index corresponding \code{type} is fetched.
 When \code{type = "FESM"}, the URL for FESM_LPC_PROJ.gpkg is used. The FESM index
 has not been updated since May 2020. The WESM index should be used for nearly all work.
-When \code{type = "WESM"}, the URL for WESM.gpkg is used.
+When \code{type = "WESM"}, the URL for WESM.gpkg is used. This is the default.
 When \code{type = "ENTWINE"} is used, the URL for the USGS Entwine data index
-maintained by Howard Butler is used.}
+maintained by Howard Butler is used.
+When \code{type = "ENTWINEPLUS"} is used, the URL for the enhanced USGS Entwine data index
+produced by Robert J. McGaughey is used.}
 
 \item{type}{A character string specifying the index to use. Valid values
 are \code{"WESM"}, \code{"FESM"}, \code{"ENTWINE"}, or \code{"ENTWINEPLUS"}.}
@@ -46,9 +48,14 @@ work unit identifier and the work package identifier. The index is
 stored in geopackage format and can be somewhat large. The index
 is refreshed whenever new data is added to the USGS collection.
 }
+\details{
+You can also download the project index manually and then use
+  \code{setUSGSProjectIndex()} to activate the index for use with \code{USGSlidar}
+  functions.
+}
 \examples{
 \dontrun{
-fetchUSGSProjectIndex("")
+fetchUSGSProjectIndex()
 fetchUSGSProjectIndex("Project.gpkg")
 fetchUSGSProjectIndex("Project.gpkg", method = "wininet")
 }

@@ -72,6 +72,10 @@ fetchFile <- function(
 #' stored in geopackage format and can be somewhat large. The index
 #' is refreshed whenever new data is added to the USGS collection.
 #'
+#' @details You can also download the project index manually and then use
+#'   \code{setUSGSProjectIndex()} to activate the index for use with \code{USGSlidar}
+#'   functions.
+#'
 #' @param destfile A character string specifying the file name for the downloaded
 #'   index. If not provided or empty, the index is stored in the current
 #'   working directory using the filename in the url.
@@ -79,9 +83,11 @@ fetchFile <- function(
 #'   string, the URL for the project index corresponding \code{type} is fetched.
 #'   When \code{type = "FESM"}, the URL for FESM_LPC_PROJ.gpkg is used. The FESM index
 #'   has not been updated since May 2020. The WESM index should be used for nearly all work.
-#'   When \code{type = "WESM"}, the URL for WESM.gpkg is used.
+#'   When \code{type = "WESM"}, the URL for WESM.gpkg is used. This is the default.
 #'   When \code{type = "ENTWINE"} is used, the URL for the USGS Entwine data index
 #'   maintained by Howard Butler is used.
+#'   When \code{type = "ENTWINEPLUS"} is used, the URL for the enhanced USGS Entwine data index
+#'   produced by Robert J. McGaughey is used.
 #' @param type A character string specifying the index to use. Valid values
 #'   are \code{"WESM"}, \code{"FESM"}, \code{"ENTWINE"}, or \code{"ENTWINEPLUS"}.
 #' @param method Method used with \code{download.file()}.  Refer to \code{download.file()}
@@ -91,7 +97,7 @@ fetchFile <- function(
 #'   This is the value returned from \code{download.file}.
 #' @examples
 #' \dontrun{
-#' fetchUSGSProjectIndex("")
+#' fetchUSGSProjectIndex()
 #' fetchUSGSProjectIndex("Project.gpkg")
 #' fetchUSGSProjectIndex("Project.gpkg", method = "wininet")
 #' }
@@ -99,7 +105,7 @@ fetchFile <- function(
 fetchUSGSProjectIndex <- function(
   destfile = "",
   url = "",
-  type = "FESM",
+  type = "WESM",
   method = "libcurl",
   ...
 ) {
@@ -199,18 +205,21 @@ setUSGSProjectIndex <- function(
 #
 #' USGS Lidar Toolkit -- Download Lidar Tile Index
 #'
-#' Downloads the USGS tile index file from the USGS rockyftp server. The tile
-#' index is the FESM_LPC_TILE geopackage that is updated by the USGS as new lidar
+#' Downloads the USGS tile index file from the USGS rockyweb server. The tile
+#' index is the LPC_TESM geopackage that is updated by the USGS as new lidar
 #' data are added to the published collection of data. This file is large so it
 #' usually makes sense to download it once and keep a local copy. However, the
 #' files also changes daily so if you want the latest index, you should download
 #' the index more frequently.
 #'
+#' @details You can also download the tile index manually and then use \code{setUSGSTileIndex()}
+#'   to activate the index for use with \code{USGSlidar} functions.
+#'
 #' @param destfile A character string specifying the file name for the downloaded
 #'    tile index. If not provided or empty, the index is stored in the current
 #'   working directory using the filename in the url.
 #' @param url A character string with the URL for tile index file. If an empty
-#'   string, FESM_LPC_TILE.gpkg from the USGS rockyftp server is used.
+#'   string, FESM_LPC_TILE.gpkg from the USGS rockyweb server is used.
 #' @param method Method used with \code{download.file()}
 #' @param ... Additional arguments passed to \code{download.file()}
 #' @return An (invisible) integer code, 0 for success and non-zero for failure.
@@ -223,7 +232,7 @@ setUSGSProjectIndex <- function(
 #' }
 #' @export
 fetchUSGSTileIndex <- function(
-  destfile,
+  destfile = "",
   url = "",
   method = "libcurl",
   ...
