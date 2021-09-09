@@ -38,7 +38,7 @@ regardless of the structure of the point data. When working with the
 3DEP data collection, you have to download all point tiles covering an
 area of interest and then clip data covering your specific extent. In
 general, using the Entwine data collection and PDAL pipelines is much
-more efficient compared to download full tiles and then clipping data
+more efficient compared to downloading full tiles and then clipping data
 for a specific extent. However, the end result is the same (provided you
 delete all the point tiles necessary to cover the desired area(s) after
 clipping data for specific areas).
