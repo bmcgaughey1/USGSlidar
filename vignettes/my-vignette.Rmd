@@ -57,6 +57,10 @@ is hosted [here](https://raw.githubusercontent.com/bmcgaughey1/EntwineIndex/main
 
 The example point is located within the 2014 Glacier Peak lidar acquisition in Washington state, USA.
 
+For the Entwine data collection, all data are from lidar so the lidarOnly option in queryUSGSProjectIndex
+is not needed. In addition, this option relies on a specific field in the USGS WESM index so it should
+only be used with indexes that include this field.
+
 **This example will download the [Entwine index](https://raw.githubusercontent.com/hobu/usgs-lidar/master/boundaries/resources.geojson) produced by Howard Butler into the current working directory.**
 
 ```{r fig.height=6, fig.width=6, message=FALSE, warning=FALSE}
@@ -69,7 +73,8 @@ project_polys <- queryUSGSProjectIndex(-13499097
                                        , 6139669
                                        , buffer = 500
                                        , shape = "circle"
-                                       , crs = "EPSG:3857"
+                                       , crs = 3857
+                                       , lidarOnly = FALSE
 )
 
 # now query to get the sample area attributed with the project polygon information
@@ -79,7 +84,8 @@ point_poly <- queryUSGSProjectIndex(-13499097
                                     , buffer = 500
                                     , shape = "circle"
                                     , return = "aoi"
-                                    , crs = "EPSG:3857"
+                                    , crs = 3857
+                                    , lidarOnly = FALSE
 )
 
 # finally, query using a point in UTM 10N within the same lidar acquisition to attribute
@@ -90,7 +96,8 @@ point <- queryUSGSProjectIndex(640377.7
                                 , shape = "circle"
                                 , return = "aoi"
                                 , crs = "EPSG:26910"
-                                , returncrs = "EPSG:3857"
+                                , returncrs = 3857
+                                , lidarOnly = FALSE
 )
 
 # display the project area polygon and the buffered point
@@ -102,7 +109,7 @@ ggplot() +
   annotation_spatial(point_poly, fill = "red")
 
 cat("Attributes for the acquistion in the ENTWINE index:\n",
-    paste(paste(colnames(project_polys@data), collapse= "\n "), "\n"))
+    paste(paste(colnames(project_polys), collapse= "\n "), "\n"))
 ```
 
 ## Example 2 -- Query USGS Entwine lidar collection using enhanced ENTWINE index
@@ -126,7 +133,7 @@ project_polys <- queryUSGSProjectIndex(-13499097
                                        , 6139669
                                        , buffer = 500
                                        , shape = "circle"
-                                       , crs = "EPSG:3857"
+                                       , crs = 3857
 )
 
 # now query to get the sample area attributed with the project polygon information
@@ -136,7 +143,7 @@ point_poly <- queryUSGSProjectIndex(-13499097
                                     , buffer = 500
                                     , shape = "circle"
                                     , return = "aoi"
-                                    , crs = "EPSG:3857"
+                                    , crs = 3857
 )
 
 # finally, query using a point in UTM 10N within the same lidar acquisition to attribute
@@ -146,8 +153,8 @@ point <- queryUSGSProjectIndex(640377.7
                                 , buffer = 0
                                 , shape = "circle"
                                 , return = "aoi"
-                                , crs = "EPSG:26910"
-                                , returncrs = "EPSG:3857"
+                                , crs = 26910
+                                , returncrs = 3857
 )
 
 # display the project area polygon and the buffered point
@@ -159,5 +166,5 @@ ggplot() +
   annotation_spatial(point_poly, fill = "red")
 
 cat("Attributes for the acquistion in the enhanced ENTWINE index:\n",
-    paste(paste(colnames(project_polys@data), collapse= "\n "), "\n"))
+    paste(paste(colnames(project_polys), collapse= "\n "), "\n"))
 ```

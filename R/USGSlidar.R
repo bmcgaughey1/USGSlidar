@@ -22,7 +22,6 @@ USGSEnv <- new.env(parent = emptyenv())
 USGSEnv$USGSProjectIndex <- ""
 USGSEnv$USGSTileIndex <- ""
 USGSEnv$USGSLoadedProjectIndex <- ""
-USGSEnv$USGSLoadedProjectIndexIsLidarOnly <- NA
 USGSEnv$USGSProjectsWebMerc <- ""
 
 # ---------- fetchFile
@@ -149,7 +148,6 @@ fetchUSGSProjectIndex <- function(
     # successful...save the local file for later use
     USGSEnv$USGSProjectIndex <- destfile
     USGSEnv$USGSLoadedProjectIndex <- ""
-    USGSEnv$USGSLoadedProjectIndexIsLidarOnly <- NA
     USGSEnv$USGSProjectsWebMerc <- ""
   } else {
     # not successful...clear local file
@@ -185,13 +183,11 @@ setUSGSProjectIndex <- function(
       cat("Project index file: ", index, " activated and ready for query")
       USGSEnv$USGSProjectIndex <- index
       USGSEnv$USGSLoadedProjectIndex <- ""
-      USGSEnv$USGSLoadedProjectIndexIsLidarOnly <- NA
       USGSEnv$USGSProjectsWebMerc <- ""
       invisible(0)
     } else {
       USGSEnv$USGSProjectIndex <- ""
       USGSEnv$USGSLoadedProjectIndex <- ""
-      USGSEnv$USGSLoadedProjectIndexIsLidarOnly <- NA
       USGSEnv$USGSProjectsWebMerc <- ""
       stop(paste("Project index file:", index, "does not exist."))
     }
@@ -473,16 +469,23 @@ fetchUSGSTiles <- function(
 #'   for the spatial overlay. For the USGS WESM index, setting \code{lidarOnly = TRUE}
 #'   will include projects with the following values for the collection method:
 #'   linear-mode lidar, Bathymetric LIDAR, Topobathymetric LIDAR, Geiger-mode LIDAR,
-#'   Single Photon LIDAR. THIS OPTION IS NOT YET IMPLEMENTED.
+#'   Single Photon LIDAR. For other indexes, set \code{lidarOnly = FALSE} to prevent
+#'   errors.
 #' @param dropNAColumns list of column names to test in the index for NA values.
 #'   If any values in any of the columns are NA, the feature will be dropped
 #'   from the index prior to the spatial overlay. Default is to consider all
 #'   features in the index.
 #' @param clean Boolean to enable a cleaning operation for the project polygons
-#'   using a call to \code{gBuffer} with \code{width = 0} and \code{byid = TRUE}.
-#'   This operation can fix many, but not all, topology problems. If you see
+#'   using a call to \code{st_buffer} with \code{dist = 0}.
+#'   This operation can fix some, but not all, topology problems. If you see
 #'   warnings about self-intersecting rings, you may need to do some additional
 #'   cleaning on a local copy of the project index.
+#'   As of 9/22/2021, I added some additional checks and removed the call to
+#'   st_buffer. The operations invoked when \code{clean = TRUE} can take a long
+#'   time so you may be better off loading the index and cleaning it outside
+#'   of this library.
+#' @param verbose Boolean to enable printing of status messages. This is really
+#'   only useful for code debugging.
 #' @param ... Additional arguments passed to \code{download.file}
 #' @return A \code{SpatialPolygonsDataFrame} or \code{sf} object containing project
 #'   polygon(s) and attribute(s) for lidar projects covering the specified area.
@@ -490,8 +493,7 @@ fetchUSGSTiles <- function(
 #'   followed by attributes for the lidar project polygons.
 #' @examples
 #' \dontrun{
-#' queryUSGSProjectIndex(-13540901, 5806426, 180, shape = "circle",
-#'   crs = CRS(SRS_string="EPSG:3857"))
+#' queryUSGSProjectIndex(-13540901, 5806426, 180, shape = "circle", crs = 3857)
 #'   }
 #' @export
 queryUSGSProjectIndex <- function(
@@ -504,11 +506,12 @@ queryUSGSProjectIndex <- function(
   index = "",
   segments = 60,
   return = "index",
-  returnType = "Spatial",
+  returnType = "sf",
   returncrs = "same",
   lidarOnly = TRUE,
   dropNAColumns = NULL,
-  clean = TRUE,
+  clean = FALSE,
+  verbose = FALSE,
   ...
 ) {
   # turn off some warnings from rgdal...I think these are related to updates to PROJ
@@ -516,38 +519,45 @@ queryUSGSProjectIndex <- function(
   rgdal::set_rgdal_show_exportToProj4_warnings(FALSE)
   rgdal::set_thin_PROJ6_warnings(TRUE)
 
-  convertTosf <- FALSE
+  # assume we are working with sf objects. if aoi is not sf, convert to sf and set flag
+  # indicating we need to convert back to Spatial*...not relevant if using (x,y)
+  convertTosp <- FALSE
   if (!is.null(aoi)) {
     target <- aoi
 
     # check object type
-    if (!inherits(target, "Spatial")) {
-      target <- sf::as_Spatial(target)
-      convertTosf <- TRUE
+    if (inherits(target, "Spatial")) {
+      if (verbose) cat("--Converting Spatial* object to sf object\r\n")
+      target <- sf::st_as_sf(target)
+      convertTosp <- TRUE
     }
 
     # transform to web mercator...need to do this before buffer so we can use meters as units
-    targetWebMerc <- sp::spTransform(target,
-        CRS = sp::CRS(SRS_string="EPSG:3857"))
+    if (verbose) cat("--Projecting target features to web mercator\r\n")
+    targetWebMerc <- sf::st_transform(target, 3857)
   } else {
     targetWebMerc <- ""
   }
 
   # prepare feature data for query...may be based on point (x,y) or
   # aoi (Spatial* or sf* object)
+  if (verbose) cat("--Preparing target data\r\n")
   targetWebMerc <- prepareTargetData(x, y, buffer, shape, targetWebMerc, crs, segments, returnType)
 
   if (is.null(aoi)) {
-    # just in case returnType is not "spatial", convert
-    if (!inherits(targetWebMerc, "Spatial")) {
-      targetWebMerc <- sf::as_Spatial(targetWebMerc)
-      convertTosf <- TRUE
+    # just in case returnType is not sf, convert
+    if (inherits(targetWebMerc, "Spatial")) {
+      targetWebMerc <- sf::st_as_sf(targetWebMerc)
+      convertTosp <- TRUE
     }
 
     # have x,y but it could be in a projection other than web mercator
-    targetWebMerc <- sp::spTransform(targetWebMerc,
-                                     CRS = sp::CRS(SRS_string="EPSG:3857"))
+    if (verbose) cat("--Projecting target feature to web mercator\r\n")
+    targetWebMerc <- sf::st_transform(targetWebMerc, 3857)
   }
+
+  # set attribute-geometry relationship to constant...all attributes represent the entire polygon
+  sf::st_agr(targetWebMerc) <- "constant"
 
   # ***** temp
   #plot(targetWebMerc)
@@ -571,44 +581,83 @@ queryUSGSProjectIndex <- function(
     # might have to add call to st_layers() to get list of layers and then
     # read the first or let user add a layer name
     # USGS WESM files only have 1 layer as of 9/7/2021
-    projects <- rgdal::readOGR(dsn = index, verbose = F, stringsAsFactors = FALSE)
-
-    # filter for lidar-only projects
-    # if (lidarOnly) {
-    #   projects <- projects[projects@data$p_method == "linear-mode lidar" |
-    #                          projects@data$p_method == "Bathymetric LIDAR" |
-    #                          projects@data$p_method == "Topobathymetric LIDAR" |
-    #                          projects@data$p_method == "Geiger-mode LIDAR" |
-    #                          projects@data$p_method == "Single Photon LIDAR", ]
-    # }
+    if (verbose) cat("--Reading index\r\n")
+    projects <- sf::st_read(dsn = index, stringsAsFactors = FALSE)
 
     # transform to web mercator
-    projectsWebMerc <- sp::spTransform(projects,
-      CRS = sp::CRS(SRS_string="EPSG:3857"))
+    if (verbose) cat("--Projecting index to web mercator\r\n")
+    projectsWebMerc <- sf::st_transform(projects, 3857)
+
+    # set attribute-geometry relationship to constant...all attributes represent the entire polygon
+    sf::st_agr(projectsWebMerc) <- "constant"
 
     # we have loaded the index...save it for subsequent use
     USGSEnv$USGSLoadedProjectIndex <- index
     USGSEnv$USGSProjectsWebMerc <- projectsWebMerc
-    USGSEnv$USGSLoadedProjectIndexIsLidarOnly <- lidarOnly
   } else {
     cat("Using pre-loaded project index\r\n")
     projectsWebMerc <- USGSEnv$USGSProjectsWebMerc
   }
 
+  # filter for lidar-only projects
+  if (lidarOnly) {
+    if (verbose) cat("--Filtering for lidar projects\r\n")
+    countBefore <- nrow(projectsWebMerc)
+    projectsWebMerc <- projectsWebMerc[projectsWebMerc$p_method == "linear-mode lidar" |
+                                         projectsWebMerc$p_method == "Topobathymetric LIDAR" |
+                                         projectsWebMerc$p_method == "Geiger-mode LIDAR" |
+                                         projectsWebMerc$p_method == "Single Photon LIDAR", ]
+    countAfter <- nrow(projectsWebMerc)
+    message("Found ", countAfter, " lidar projects out of ", countBefore, " total projects")
+  }
+
   # if dropNAColumns is valid, check for and remove and features that have NA
   # values in any columns listed in dropNAColumns
   if (length(dropNAColumns) > 0) {
-    projectsWebMerc <- projectsWebMerc[stats::complete.cases(projectsWebMerc[, dropNAColumns]), ]
+    if (verbose) cat("--Filtering columns with NA values\r\n")
+    projectsWebMerc <- projectsWebMerc[stats::complete.cases(projectsWebMerc[, dropNAColumns, drop = TRUE]), ]
   }
 
-  rgeos::gIsValid(projectsWebMerc)
-
   # do a buffer operation to clean up topology
+  # 9/23/2021...this appears to be failing...hangs
   if (clean) {
-    projectsWebMerc <- rgeos::gBuffer(projectsWebMerc,
-      byid = TRUE,
-      width = 0
-    )
+    if (verbose) cat("--Checking index polygons\r\n")
+
+    # check geometries
+    # empty
+    emptyCount <- sum(is.na(st_dimension(projectsWebMerc)))
+    if (emptyCount)
+      message("Found", emptyCount, "features with empty geometries")
+
+    # corrupt
+    corruptCount <- sum(is.na(st_is_valid(projectsWebMerc)))
+    if (corruptCount)
+      message("Found", corruptCount, "features with corrupt geometries")
+
+    # invalid
+    invalidCount <- sum(any(na.omit(st_is_valid(projectsWebMerc)) == FALSE))
+    if (invalidCount)
+      message("Found ", invalidCount, " features with invalid geometries")
+
+    if (emptyCount + corruptCount + invalidCount) {
+      if (emptyCount) {
+        stop(paste("Index contains features with empty geometries",
+                   "that cannot be fixed...aborting"))
+        return(NULL)
+      } else {
+        if (verbose) cat("--Attempting to clean index polygons using st_make_valid\r\n")
+        projectsWebMerc <- st_make_valid(projectsWebMerc)
+        if (any(na.omit(st_is_valid(projectsWebMerc) == FALSE))) {
+          if (verbose) cat("--After st_make_valid there are still invalid geometries\r\n")
+          if (verbose) cat("--Attempting to clean index polygons using st_buffer\r\n")
+          #projectsWebMerc <- sf::st_buffer(projectsWebMerc, 0.0)
+        } else {
+          if (verbose) cat("--Cleaning successful!!!\r\n")
+        }
+      }
+    } else {
+      message("Nothing to clean, all geometries seem valid")
+    }
   }
 
   # intersect AOI with index...return is AOI shapes and AOI attributes
@@ -616,8 +665,9 @@ queryUSGSProjectIndex <- function(
   # if there are any problems with the project shapes, you will get an error
   # might be able to wrap this in try() stmt to gracefully report
   # any problems
-  message("Warning messages (if any) from proj4string() regarding comments can be ignored...")
-  prj <- raster::intersect(targetWebMerc, projectsWebMerc)
+  #message("Warning messages (if any) from proj4string() regarding comments can be ignored...")
+  if (verbose) cat("--Intersecting target objects with index polygons\r\n")
+  prj <- sf::st_intersection(targetWebMerc, projectsWebMerc)
 
   # intersect index with AOI...return is AOI shapes with AOI attributes
   # on right side of columns
@@ -643,27 +693,32 @@ queryUSGSProjectIndex <- function(
     # figure out the type provided using aoi and crs
     if (inherits(aoi, "Spatial")) {
       # aoi is Spatial* object
-      shortlist <- sp::spTransform(shortlist, CRS=sp::CRS(raster::crs(aoi, asText = T)))
-    } else if (any(grepl("sf", class(aoi), ignore.case = FALSE))) {
+      if (verbose) cat("--Projecting results 1\r\n")
+      shortlist <- sf::st_transform(shortlist, crs=sf::st_crs(sp::CRS(raster::crs(aoi, asText = T))))
+    } else if (inherits(aoi, "sf")) {
       # aoi is sf object
-      shortlist <- sp::spTransform(shortlist,
-        CRS=sp::CRS(sf::st_crs(aoi)$wkt))
+      if (verbose) cat("--Projecting results 2\r\n")
+      shortlist <- sf::st_transform(shortlist, crs=sf::st_crs(aoi))
     } else {
       # (x.y) provided so use crs
-      if (tolower(crs) != "")
-        shortlist <- sp::spTransform(shortlist, CRS = sp::CRS(crs))
+      if (tolower(crs) != "") {
+        if (verbose) cat("--Projecting results 3\r\n")
+        shortlist <- sf::st_transform(shortlist, crs = sf::st_crs(crs))
+      }
     }
   } else {
     # use returncrs
-    shortlist <- sp::spTransform(shortlist, CRS = sp::CRS(returncrs))
+    if (verbose) cat("--Projecting results 4\r\n")
+    shortlist <- sf::st_transform(shortlist, crs = returncrs)
   }
 
   # ***** temp
   #plot(shortlist)
 
-  if (convertTosf)
-    shortlist <- sf::st_as_sf(shortlist)
-#    shortlist <- sf::as(shortlist, "sf")
+  if (convertTosp) {
+    if (verbose) cat("--Converting results to Spatial object\r\n")
+    shortlist <- sf::as_Spatial(shortlist)
+  }
 
   return(shortlist)
 }
@@ -697,7 +752,8 @@ queryUSGSProjectIndex <- function(
 #'   units for \code{buffer} are always meters.
 #' @param projectID Character string or list of character strings
 #'   containing the ID(s) for the lidar project(s). Typically obtained
-#'   by calling queryUSGSProjectIndex().
+#'   by calling \code{queryUSGSProjectIndex()}. You must provide at least one
+#'   project identifier.
 #' @param fieldname Character string containing the name of the field to
 #'   use when querying the tile index.
 #' @param shape Character string describing the shape of the sample area in
@@ -708,6 +764,7 @@ queryUSGSProjectIndex <- function(
 #' @param crs Valid \code{proj4string} string defining the coordinate
 #'   reference system of \code{(x,y)}. \code{crs} is required when using
 #'   \code{(x,y)}. \code{crs} is ignored when \code{aoi} is specified.
+#'   \code{crs} can also be an EPSG code (numeric).
 #' @param index Index file for USGS lidar tiles If not provided, an index
 #'   previously specified by a call to \code{fetchUSGSProjectIndex} or
 #'   \code{setUSGSProjectIndex} will be used. If not provided and you have
@@ -739,6 +796,8 @@ queryUSGSProjectIndex <- function(
 #'   \code{sf} object. A value of \code{"same"} will project the return object
 #'   to the same coordinate reference system as \code{aoi} or to \code{crs} when
 #'   used with \code{(x,y)}.
+#' @param verbose Boolean to enable printing of status messages. This is really
+#'   only useful for code debugging.
 #' @param ... Additional arguments passed to \code{download.file}
 #' @return A \code{SpatialPolygonsDataFrame} or \code{sf} object containing
 #'   polygon(s) and attribute(s) for tiles covering the specified area.
@@ -746,15 +805,14 @@ queryUSGSProjectIndex <- function(
 #'   followed by attributes for the lidar tile polygons..
 #' @examples
 #' \dontrun{
-#' queryUSGSTileIndex(-13540901, 5806426, 180, shape = "circle",
-#'   CRS = CRS(SRS_string="EPSG:3857"))
+#' queryUSGSTileIndex(-13540901, 5806426, 180, shape = "circle", crs = 3857)
 #'   }
 #' @export
 queryUSGSTileIndex <- function(
   x,
   y,
   buffer = 0,
-  projectID = "",
+  projectID = NULL,
   fieldname = "workunit_id",
   shape = "square",
   aoi = NULL,
@@ -762,54 +820,67 @@ queryUSGSTileIndex <- function(
   index = "",
   segments = 60,
   return = "index",
-  returnType = "Spatial",
+  returnType = "sf",
   returncrs = "same",
+  verbose = FALSE,
   ...
 ) {
   # I could add the clean option that is used for the project index. However, I
   # do not think there should be topology problems with the tiles since they should
   # represent more "friendly" shapes that the project polygons. The cleaning is
-  # easy to add so I will wait...
+  # easy to add so I will wait...NOT!!!! (the easy part...it is only easy if it works)
   #
   # turn off some warnings from rgdal...I think these are related to updates to PROJ
   # and a lag between various package updates and how the packages interact with PROJ
   rgdal::set_rgdal_show_exportToProj4_warnings(FALSE)
   rgdal::set_thin_PROJ6_warnings(TRUE)
 
-  convertTosf <- FALSE
+  # check that we have something in the projectID
+  if (!length(projectID)) {
+    stop("You must provide at least one project identifier in projectID.")
+  }
+
+  # assume we are working with sf objects. if aoi is not sf, convert to sf and set flag
+  # indicating we need to convert back to Spatial*...not relevant if using (x,y)
+  convertTosp <- FALSE
   if (!is.null(aoi)) {
     target <- aoi
 
     # check object type
-    if (!inherits(target, "Spatial")) {
-      target <- sf::as_Spatial(target)
-      convertTosf <- TRUE
+    if (inherits(target, "Spatial")) {
+      if (verbose) cat("--Converting Spatial* object to sf object\r\n")
+      target <- sf::st_as_sf(target)
+      convertTosp <- TRUE
     }
 
     # transform to web mercator...need to do this before buffer so we can use meters as units
-    targetWebMerc <- sp::spTransform(target,
-                                     CRS = sp::CRS(SRS_string="EPSG:3857"))
+    if (verbose) cat("--Projecting target features to web mercator\r\n")
+    targetWebMerc <- sf::st_transform(target, 3857)
   } else {
     targetWebMerc <- ""
   }
 
   # prepare feature data for query...may be based on point (x,y) or
   # aoi (Spatial* or sf* object)
+  if (verbose) cat("--Preparing target data\r\n")
   targetWebMerc <- prepareTargetData(x, y, buffer, shape, targetWebMerc, crs, segments, returnType)
 
   if (is.null(aoi)) {
-    # just in case returnType is not "spatial", convert
-    if (!inherits(targetWebMerc, "Spatial")) {
-      targetWebMerc <- sf::as_Spatial(targetWebMerc)
-      convertTosf <- TRUE
+    # just in case returnType is not sf, convert
+    if (inherits(targetWebMerc, "Spatial")) {
+      targetWebMerc <- sf::st_as_sf(targetWebMerc)
+      convertTosp <- TRUE
     }
 
     # have x,y but it could be in a projection other than web mercator
-    targetWebMerc <- sp::spTransform(targetWebMerc,
-                                     CRS = sp::CRS(SRS_string="EPSG:3857"))
+    if (verbose) cat("--Projecting target feature to web mercator\r\n")
+    targetWebMerc <- sf::st_transform(targetWebMerc, 3857)
   }
 
-    # ***** temp
+  # set attribute-geometry relationship to constant...all attributes represent the entire polygon
+  sf::st_agr(targetWebMerc) <- "constant"
+
+  # ***** temp
   #plot(targetWebMerc)
 
   # see if we have a specified project index
@@ -840,7 +911,7 @@ queryUSGSTileIndex <- function(
 
   # this code (at least the FieldName) will need to change once USGS
   # gets their act sorted out.
-  USGSTileLayer <- (sf::st_layers(dsn = TileIndex))$name[1]
+  USGSTileLayer <- (sf::st_layers(TileIndex))$name[1]
   #FieldName <- "project_id"
 
   # read tiles and build index for specific project
@@ -855,8 +926,10 @@ queryUSGSTileIndex <- function(
   # support SQL but this link has a way to subset:
   # https://geospatial.commons.gc.cuny.edu/2013/12/31/subsetting-in-readogr/
   #
+  shortlist <- NULL
   count <- 1
   for (projID in projectID) {
+    if (verbose) cat("--Querying tile index for", projID, "\r\n")
     tiles <- sf::read_sf(dsn = TileIndex,
       layer = USGSTileLayer,
       stringsAsFactors = FALSE,
@@ -870,25 +943,26 @@ queryUSGSTileIndex <- function(
     if (nrow(tiles) == 0) {
       message("no tiles found where ", fieldname, " is ", projID)
     } else {
-      # convert to Spatial* object
-      tiles <- sf::as_Spatial(tiles)
-
       # transform to web mercator
-      tilesWebMerc <- sp::spTransform(tiles,
-        CRS = sp::CRS(SRS_string="EPSG:3857"))
+      if (verbose) cat("--Projecting tiles to web mercator\r\n")
+      tilesWebMerc <- sf::st_transform(tiles, 3857)
 
       # we have loaded the index...save it for subsequent use
+      # we only save the name since the tile index is large
       USGSEnv$USGSTileIndex <- TileIndex
 
+      # set attribute-geometry relationship to constant...all attributes represent the entire polygon
+      sf::st_agr(tilesWebMerc) <- "constant"
+
       # intersect AOI with index...return is SpatialPolygonsDataFrame
-      message("Warning messages (if any) from proj4string() regarding comments can be ignored...")
-      prj <- raster::intersect(targetWebMerc, tilesWebMerc)
+      #message("Warning messages (if any) from proj4string() regarding comments can be ignored...")
+      prj <- sf::st_intersection(targetWebMerc, tilesWebMerc)
 
       if (length(prj) == 0) {
         message("no tiles overlap the target aoi for projectID: ", projID)
       } else {
         # status message
-        message("Found ", length(prj), " tiles where ", fieldname, " is ", projID)
+        message("Found ", nrow(prj), " tiles where ", fieldname, " is ", projID)
 
         if (tolower(return) == "aoi") {
           # set return to target shapes with target attributes prepended
@@ -911,36 +985,43 @@ queryUSGSTileIndex <- function(
     }
   }
 
-  if (nrow(shortlist) > 0) {
-    # if we want to implement returncrs, now is the time to reproject the
-    # outputs...target is always a Spatial* object at this point
-    if (tolower(returncrs) == "same") {
-      # figure out the type provided using aoi and crs
-      if (inherits(aoi, "Spatial")) {
-        # aoi is Spatial* object
-        shortlist <- sp::spTransform(shortlist, CRS=sp::CRS(raster::crs(aoi, asText = T)))
-      } else if (any(grepl("sf", class(aoi), ignore.case = FALSE))) {
-        # aoi is sf object
-        shortlist <- sp::spTransform(shortlist,
-          CRS=sp::CRS(sf::st_crs(aoi)$wkt))
+  if (!is.null(shortlist)) {
+    if (nrow(shortlist) > 0) {
+      # if we want to implement returncrs, now is the time to reproject the
+      # outputs...target is always a Spatial* object at this point
+      if (tolower(returncrs) == "same") {
+        # figure out the type provided using aoi and crs
+        if (inherits(aoi, "Spatial")) {
+          # aoi is Spatial* object
+          if (verbose) cat("--Projecting results 1\r\n")
+          shortlist <- sf::st_transform(shortlist, crs=sf::st_crs(sp::CRS(raster::crs(aoi, asText = T))))
+        } else if (inherits(aoi, "sf")) {
+          # aoi is sf object
+          if (verbose) cat("--Projecting results 2\r\n")
+          shortlist <- sf::st_transform(shortlist, crs=sf::st_crs(aoi))
+        } else {
+          # (x,y) provided so use crs
+          if (tolower(crs) != "") {
+            if (verbose) cat("--Projecting results 3\r\n")
+            shortlist <- sf::st_transform(shortlist, crs = sf::st_crs(crs))
+          }
+        }
       } else {
-        # (x,y) provided so use crs
-        if (tolower(crs) != "")
-          shortlist <- sp::spTransform(shortlist, CRS = sp::CRS(crs))
+        # use returncrs
+        if (verbose) cat("--Projecting results 4\r\n")
+        shortlist <- sf::st_transform(shortlist, crs = returncrs)
+      }
+
+      # ***** temp
+      #plot(shortlist)
+
+      if (convertTosp) {
+        if (verbose) cat("--Converting results to Spatial object\r\n")
+        shortlist <- sf::as_Spatial(shortlist)
       }
     } else {
-      # use returncrs
-      shortlist <- sp::spTransform(shortlist, CRS = sp::CRS(returncrs))
+      shortlist <- NULL
     }
-
-    # ***** temp
-    #plot(shortlist)
-
-    if (convertTosf)
-      shortlint <- sf::st_as_sf(shortlist)
-  #    shortlist <- sf::as(shortlist, "sf")
-  } else {
-    shortlist <- NULL
   }
 
   return(shortlist)
@@ -966,7 +1047,6 @@ clearUSGSProjectIndex <- function() {
   USGSEnv$USGSLoadedProjectIndex <- ""
 #  rm(USGSProjectsWebMerc, envir = USGSEnv)
   USGSEnv$USGSProjectsWebMerc <- ""
-  USGSEnv$USGSLoadedProjectIndexIsLidarOnly <- NA
   invisible(0)
 }
 
@@ -1052,7 +1132,7 @@ clearUSGSTileIndex <- function() {
 #'   reference system of \code{(x,y)} or \code{aoi}. \code{crs} is required when using
 #'   \code{(x,y)}. It is optional when using \code{aoi}. This can also be a valid
 #'   \code{SRS_string} for use with the sp::CRS() function where it will be provided
-#'   as the \code{projargs} argument.
+#'   as the \code{projargs} argument. \code{crs} can also be an EPSG code (numeric).
 #' @param segments Number of segments to use when generating a circular
 #'   area of interest. When using a \code{SpatialPoint*} or \code{sf} object
 #'   with \code{shape = "circle"}, set \code{segments} to a rather large value (60
@@ -1091,7 +1171,7 @@ prepareTargetData <- function(
   aoi = "",
   crs = "",
   segments = 60,
-  returnType = "Spatial"
+  returnType = "sf"
 ) {
   if (inherits(aoi, "Spatial")) {
     # see if we have a Spatial* object
@@ -1221,8 +1301,8 @@ prepareTargetData <- function(
     if (tolower(returnType) == "spatial") {
       # make a point feature
       tempTarget <- sp::SpatialPointsDataFrame((rbind(c(x, y))),
-        data.frame("ID" = c("P1"), stringsAsFactors = F),
-        proj4string = sp::CRS(crs))
+        data.frame("ID" = c("P1"), stringsAsFactors = FALSE),
+        proj4string = sp::CRS(sf::st_crs(crs)$proj4string))
 
       if (length(buffer) > 1) {
         # check number of points and number of buffer values...should match

@@ -14,11 +14,12 @@ queryUSGSProjectIndex(
   index = "",
   segments = 60,
   return = "index",
-  returnType = "Spatial",
+  returnType = "sf",
   returncrs = "same",
   lidarOnly = TRUE,
   dropNAColumns = NULL,
-  clean = TRUE,
+  clean = FALSE,
+  verbose = FALSE,
   ...
 )
 }
@@ -103,7 +104,8 @@ argument.}
 for the spatial overlay. For the USGS WESM index, setting \code{lidarOnly = TRUE}
 will include projects with the following values for the collection method:
 linear-mode lidar, Bathymetric LIDAR, Topobathymetric LIDAR, Geiger-mode LIDAR,
-Single Photon LIDAR. THIS OPTION IS NOT YET IMPLEMENTED.}
+Single Photon LIDAR. For other indexes, set \code{lidarOnly = FALSE} to prevent
+errors.}
 
 \item{dropNAColumns}{list of column names to test in the index for NA values.
 If any values in any of the columns are NA, the feature will be dropped
@@ -111,10 +113,17 @@ from the index prior to the spatial overlay. Default is to consider all
 features in the index.}
 
 \item{clean}{Boolean to enable a cleaning operation for the project polygons
-using a call to \code{gBuffer} with \code{width = 0} and \code{byid = TRUE}.
-This operation can fix many, but not all, topology problems. If you see
+using a call to \code{st_buffer} with \code{dist = 0}.
+This operation can fix some, but not all, topology problems. If you see
 warnings about self-intersecting rings, you may need to do some additional
-cleaning on a local copy of the project index.}
+cleaning on a local copy of the project index.
+As of 9/22/2021, I added some additional checks and removed the call to
+st_buffer. The operations invoked when \code{clean = TRUE} can take a long
+time so you may be better off loading the index and cleaning it outside
+of this library.}
+
+\item{verbose}{Boolean to enable printing of status messages. This is really
+only useful for code debugging.}
 
 \item{...}{Additional arguments passed to \code{download.file}}
 }
@@ -146,7 +155,6 @@ Finds all USGS lidar projects that cover the area-of-interest
 }
 \examples{
 \dontrun{
-queryUSGSProjectIndex(-13540901, 5806426, 180, shape = "circle",
-  crs = CRS(SRS_string="EPSG:3857"))
+queryUSGSProjectIndex(-13540901, 5806426, 180, shape = "circle", crs = 3857)
   }
 }
