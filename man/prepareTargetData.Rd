@@ -12,7 +12,7 @@ prepareTargetData(
   aoi = "",
   crs = "",
   segments = 60,
-  returnType = "Spatial"
+  returnType = "sf"
 )
 }
 \arguments{
@@ -42,7 +42,7 @@ describing the area(s) of interest. Can be points or polygons.}
 reference system of \code{(x,y)} or \code{aoi}. \code{crs} is required when using
 \code{(x,y)}. It is optional when using \code{aoi}. This can also be a valid
 \code{SRS_string} for use with the sp::CRS() function where it will be provided
-as the \code{projargs} argument.}
+as the \code{projargs} argument. \code{crs} can also be an EPSG code (numeric).}
 
 \item{segments}{Number of segments to use when generating a circular
 area of interest. When using a \code{SpatialPoint*} or \code{sf} object

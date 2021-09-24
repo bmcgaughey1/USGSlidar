@@ -8,7 +8,7 @@ queryUSGSTileIndex(
   x,
   y,
   buffer = 0,
-  projectID = "",
+  projectID = NULL,
   fieldname = "workunit_id",
   shape = "square",
   aoi = NULL,
@@ -16,8 +16,9 @@ queryUSGSTileIndex(
   index = "",
   segments = 60,
   return = "index",
-  returnType = "Spatial",
+  returnType = "sf",
   returncrs = "same",
+  verbose = FALSE,
   ...
 )
 }
@@ -40,7 +41,8 @@ units for \code{buffer} are always meters.}
 
 \item{projectID}{Character string or list of character strings
 containing the ID(s) for the lidar project(s). Typically obtained
-by calling queryUSGSProjectIndex().}
+by calling \code{queryUSGSProjectIndex()}. You must provide at least one
+project identifier.}
 
 \item{fieldname}{Character string containing the name of the field to
 use when querying the tile index.}
@@ -54,7 +56,8 @@ describing the area of interest. Can be points or polygons.}
 
 \item{crs}{Valid \code{proj4string} string defining the coordinate
 reference system of \code{(x,y)}. \code{crs} is required when using
-\code{(x,y)}. \code{crs} is ignored when \code{aoi} is specified.}
+\code{(x,y)}. \code{crs} is ignored when \code{aoi} is specified.
+\code{crs} can also be an EPSG code (numeric).}
 
 \item{index}{Index file for USGS lidar tiles If not provided, an index
 previously specified by a call to \code{fetchUSGSProjectIndex} or
@@ -92,6 +95,9 @@ reference system of the returned \code{SpatialPolygonsDataFrame} or
 to the same coordinate reference system as \code{aoi} or to \code{crs} when
 used with \code{(x,y)}.}
 
+\item{verbose}{Boolean to enable printing of status messages. This is really
+only useful for code debugging.}
+
 \item{...}{Additional arguments passed to \code{download.file}}
 }
 \value{
@@ -114,7 +120,6 @@ Query the tile index to find tiles that intersect the \code{buffer}ed
 }
 \examples{
 \dontrun{
-queryUSGSTileIndex(-13540901, 5806426, 180, shape = "circle",
-  CRS = CRS(SRS_string="EPSG:3857"))
+queryUSGSTileIndex(-13540901, 5806426, 180, shape = "circle", crs = 3857)
   }
 }
