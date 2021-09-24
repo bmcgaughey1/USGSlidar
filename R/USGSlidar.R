@@ -469,8 +469,8 @@ fetchUSGSTiles <- function(
 #'   for the spatial overlay. For the USGS WESM index, setting \code{lidarOnly = TRUE}
 #'   will include projects with the following values for the collection method:
 #'   linear-mode lidar, Bathymetric LIDAR, Topobathymetric LIDAR, Geiger-mode LIDAR,
-#'   Single Photon LIDAR. For other indexes, set \code{lidarOnly = FALSE} to prevent
-#'   errors.
+#'   Single Photon LIDAR. For other indexes, use the default, \code{lidarOnly = FALSE},
+#'   to prevent errors.
 #' @param dropNAColumns list of column names to test in the index for NA values.
 #'   If any values in any of the columns are NA, the feature will be dropped
 #'   from the index prior to the spatial overlay. Default is to consider all
@@ -508,7 +508,7 @@ queryUSGSProjectIndex <- function(
   return = "index",
   returnType = "sf",
   returncrs = "same",
-  lidarOnly = TRUE,
+  lidarOnly = FALSE,
   dropNAColumns = NULL,
   clean = FALSE,
   verbose = FALSE,
