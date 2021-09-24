@@ -46,6 +46,7 @@ USGSEnv$USGSProjectsWebMerc <- ""
 #' \dontrun{
 #' fetchFile("sample", "ftp://somewebsite.com/files/samplefile.bin")
 #' }
+#' @export
 fetchFile <- function(
   url,
   destfile,
