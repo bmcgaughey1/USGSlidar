@@ -1703,6 +1703,11 @@ generatePolygonSamplePoints <- function(
 #'   of the file, it would be better to copy the file to another location, make the desired
 #'   changes and then specify your new template using the \code{pipelineTemplateFile} parameter.
 #'
+#'   The file name for the data clips is formed using the basename of the value in the
+#'   \code{URLColumnLabel} field and the value in the \code{IDColumnLabel} separated
+#'   by "_". This helps ensure that clips can be differentiated when locations are covered
+#'   by more than one lidar project.
+#'
 #' @param inputPolygons \code{Spatial*} or \code{sf} object containing a polygon(s) for
 #'   which you want to retrieve data. The polygons must include a field named \code{url}
 #'   that contains the URL for the ENTWINE data (ept.json) containing the polygon or the
