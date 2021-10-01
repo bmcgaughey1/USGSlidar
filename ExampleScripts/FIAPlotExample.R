@@ -201,11 +201,3 @@ write.csv(st_drop_geometry(target_polys_sf), paste0(state, "Plots.csv"))
 # pdal pipeline G:\R_Stuff\FIAExample\pipelines\Plot_473338115489998.json
 # pdal pipeline G:\R_Stuff\FIAExample\pipelines\Plot_196883321010854.json
 
-t <- st_read("G:/R_Stuff/PlotClipping/EntwineBoundaries.gpkg")
-mapview(t)
-
-t <- st_read("G:/R_Stuff/LIDAR_Data/OSU_LIDAR_Server/Index/Main_Index.gpkg")
-mapview(t)
-
-t <- st_read("G:/R_Stuff/LIDAR_Data/R6Server/Index/Project_Index.gpkg")
-mapview(t)
