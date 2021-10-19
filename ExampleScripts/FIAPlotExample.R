@@ -14,7 +14,7 @@ library(USGSlidar)
 setwd("G:/R_Stuff/FIAExample")
 
 state <- "TN"
-clipSize <- 1610
+clipSize <- 2000
 showMaps <- TRUE
 
 useEvalidator <- TRUE
