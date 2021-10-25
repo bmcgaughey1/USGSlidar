@@ -77,7 +77,19 @@ library(devtools)
 devtools::install_github("bmcgaughey1/USGSlidar", build_vignettes = TRUE)
 ```
 
-## Example – Not yet available
+## Example – See FIAPlotExample.R in the ExampleScripts folder
+
+The FIAPlotExample.R script queries the USGS Entwine data collection to
+find data covering the locations of FIA (Forest Inventory and Analysis)
+plots. It then constructs PDAL pipelines to retrieve data covering the
+plots using the published locations. To run the pipelines, you will need
+an Anaconda environment configured to run PDAL pipelines. The PDAL
+workshop materials provide instructions: [PDAL
+workshop](https://pdal.io/workshop/conda.html#installing-conda).
+
+Once you have your conda environment running with an environment that
+includes PDAL, you can run the pipelines created by the FIAPlotEsample.R
+script by running RunME.bat from the folder containing the pipelines.
 
 ``` r
 library(USGSlidar)
