@@ -77,6 +77,70 @@ library(devtools)
 devtools::install_github("bmcgaughey1/USGSlidar", build_vignettes = TRUE)
 ```
 
+## Problems with USGS WESM and TESM index files
+
+The USGS TESM tile index has problems with some lidar projects. The
+problems are related to missing or bad geometries for some tiles and
+involves \~20 lidar projects (haven’t really checked non-lidar
+projects). The queryUSGSTileIndex() function works correctly when the
+project being queried has good tiles but it may fail when there are
+missing or bad tile geometries within the project. USGS is aware of
+these problems but has been slow to correct them.
+
+In addition, the TESM tile index does not include sufficient information
+to fully locate the tile (LAS/LAZ file) on the rockyweb server. The
+tile\_id field in the TESM index is just a tile identifier and does not
+(usually) fully identify the file on the server. The logic used to
+create the actual file names seems to vary depending on the lidar
+project. For recent projects, the actual file names appear to be
+constructed using the project name and the year the point data were
+published. Older projects do not include information for the publication
+year in the file names.
+
+While the WESM index contains a lpc\_link field that is presumably the
+URL for the point files associated with a project, the URL is incomplete
+and does not include the actual folder containing the point files.
+Usually, the point files are in a folder named “laz” or “LAZ” but some
+projects have point files in a folder named “LAS”. The lpc\_link URLs
+are often missing the trailing “/” so code that uses them needs to check
+for the trailing “/” and add it if missing.
+
+### Example
+
+The data for Glacier Peak in Washington state is identified in WESM by:
+
+  - workunit = “WA\_GlacierPeak\_2014”
+  - workunit = 18330
+  - project = “Glacier\_Peak\_WA\_QL1\_LiDAR”
+  - project\_id = 18332
+  - lpc\_pub\_date = “2016-08-08”
+  - lpc\_link =
+    “<https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/USGS_LPC_WA_GlacierPeak_2014_LAS_2016/>”
+
+Data for this area were collected in 2014-2015 and published in 2016.
+The point data files area actually located in
+“<https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/USGS_LPC_WA_GlacierPeak_2014_LAS_2016/laz/>”
+and individual files names look like this:
+“USGS\_LPC\_WA\_GlacierPeak\_2014\_10TFU1514\_LAS\_2016.laz”
+
+The record in the TESM tile index for the same tile contains the
+following:
+
+  - tile\_id = “10TFU1514”
+  - project = “Glacier\_Peak\_WA\_QL1\_LiDAR”
+  - project\_id = 18332
+  - workunit\_id = 18330
+
+For this project and tile, we can construct a URL as follows (R syntax
+using lubridate package for year() function): URL \<-
+paste0(WESM\(lpc_link, "laz/", "USGS_LPC_", WESM\)workunit, "\_“,
+TESM\(tile_id, "_LAS_", year(WESM\)lpc\_pub\_date),”.laz")
+
+For projects where the lpc\_pub\_date is missing of set to NA, the URL
+may be as follows (but not tested for all projects): URL \<-
+paste0(WESM\(lpc_link, "laz/", "USGS_LPC_", WESM\)workunit, "\_“,
+TESM$tile\_id,”.laz")
+
 ## Example – See FIAPlotExample.R in the ExampleScripts folder
 
 The FIAPlotExample.R script queries the USGS Entwine data collection to
