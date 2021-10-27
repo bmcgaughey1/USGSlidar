@@ -44,8 +44,8 @@ containing the ID(s) for the lidar project(s). Typically obtained
 by calling \code{queryUSGSProjectIndex()}. You must provide at least one
 project identifier.}
 
-\item{fieldname}{Character string containing the name of the field to
-use when querying the tile index.}
+\item{fieldname}{Character string containing the name of the field with
+matches for the \code{projectID} to be used when querying the tile index.}
 
 \item{shape}{Character string describing the shape of the sample area in
 the case of point features or the shape applied to the buffer corners
@@ -109,7 +109,7 @@ A \code{SpatialPolygonsDataFrame} or \code{sf} object containing
 \description{
 Intersect a set of features (points or polygons) against a lidar
 tile index to determine which tiles are needed to provide coverage for the
-features. This is both a spatial overlay operation and a database query.
+features. This involves both a spatial overlay operation and a database query.
 The database query is used to limit the features used for the spatial
 overlay. This dramatically increases the speed of the query when the
 area of interest only involves a few lidar projects.

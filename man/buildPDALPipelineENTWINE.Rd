@@ -83,6 +83,11 @@ The pipeline template must include at least the following items for the ept_read
   for the package under the \code{extdata} folder. While you can directly modify this copy
   of the file, it would be better to copy the file to another location, make the desired
   changes and then specify your new template using the \code{pipelineTemplateFile} parameter.
+
+  The file name for the data clips is formed using the basename of the value in the
+  \code{URLColumnLabel} field and the value in the \code{IDColumnLabel} separated
+  by "_". This helps ensure that clips can be differentiated when locations are covered
+  by more than one lidar project.
 }
 \examples{
 \dontrun{
