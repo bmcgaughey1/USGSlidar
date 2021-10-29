@@ -325,9 +325,9 @@ setUSGSTileIndex <- function(
 #' @param ... Additional arguments passed to download.file()
 #' @return An (invisible) atomic vector of integer codes corresponding to the
 #'   \code{urls}. The values are those returned from the \code{download.file}
-#'   function calls for each of the \code{urls}. You can easily count the
-#'   number of \code{urls} successfully fetched using
-#'   \code{sum(value == 0, na.rm = TRUE)}.
+#'   function calls for each of the \code{urls}, 0 for success and non-zero
+#'   for failure. You can easily count the number of \code{urls} successfully
+#'   fetched using \code{sum(value == 0, na.rm = TRUE)}.
 #' @examples
 #' \dontrun{
 #' fetchUSGSTiles("", URLlist)
@@ -1121,7 +1121,7 @@ clearUSGSTileIndex <- function() {
 #'   vector of values corresponding to the number of objects in \code{aoi}
 #'   allowing a different buffer size for each object when \code{aoi} is a
 #'   \code{Spatial*} of \code{sf} object. \code{buffer} can be negative with
-#'   polygon feature to reduce the area considered. However, you may end up
+#'   polygon features to reduce the area considered. However, you may end up
 #'   with weird shapes if the distance is larger than the width of the polygon.
 #' @param shape Character string describing the shape of the sample area.
 #'   Valid values are \code{"square"} or \code{"circle"}. The buffer shape

@@ -134,7 +134,7 @@ following:
 For this project and tile, we can construct a URL as follows (R syntax
 using lubridate package for year() function): URL \<-
 paste0(WESM$lpc\_link, “laz/”, “USGS\_LPC\_”, WESM$workunit, "\_“,
-TESM$tile\_id,”*LAS*“, year(WESM$lpc\_pub\_date),”.laz")
+TESM$tile\_id,”\_LAS\_“, year(WESM$lpc\_pub\_date),”.laz")
 
 For projects where the lpc\_pub\_date is missing of set to NA, the URL
 may be as follows (but not tested for all projects): URL \<-

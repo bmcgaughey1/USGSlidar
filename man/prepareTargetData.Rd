@@ -28,7 +28,7 @@ return projects providing coverage for point location(s). Can be a
 vector of values corresponding to the number of objects in \code{aoi}
 allowing a different buffer size for each object when \code{aoi} is a
 \code{Spatial*} of \code{sf} object. \code{buffer} can be negative with
-polygon feature to reduce the area considered. However, you may end up
+polygon features to reduce the area considered. However, you may end up
 with weird shapes if the distance is larger than the width of the polygon.}
 
 \item{shape}{Character string describing the shape of the sample area.

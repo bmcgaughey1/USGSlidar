@@ -103,7 +103,7 @@ The record in the TESM tile index for the same tile contains the following:
 - workunit_id = 18330
 
 For this project and tile, we can construct a URL as follows (R syntax using lubridate package for year() function):
-URL <- paste0(WESM\$lpc_link, "laz/", "USGS_LPC_", WESM\$workunit, "_", TESM\$tile_id, "_LAS_", year(WESM\$lpc_pub_date), ".laz")
+URL <- paste0(WESM\$lpc_link, "laz/", "USGS_LPC_", WESM\$workunit, "_", TESM\$tile_id, "\_LAS\_", year(WESM\$lpc_pub_date), ".laz")
 
 For projects where the lpc_pub_date is missing of set to NA, the URL may be as follows (but not tested for all projects):
 URL <- paste0(WESM\$lpc_link, "laz/", "USGS_LPC_", WESM\$workunit, "_", TESM\$tile_id, ".laz")

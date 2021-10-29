@@ -14,7 +14,7 @@ library(USGSlidar)
 setwd("G:/R_Stuff/FIAExample")
 
 state <- "TN"
-clipSize <- 2000
+clipSize <- 1000
 showMaps <- TRUE
 
 useEvalidator <- TRUE
@@ -78,7 +78,7 @@ totalPlots <- nrow(PLOT)
 PLOT <- subset(PLOT, MEASYEAR >= 2010)
 plotsSince2010 <- nrow(PLOT)
 
-# FIADB locations are LON-LAT...this is OK but I prefer to work in web mercator (EPSG:3857)
+# FIADB locations are NAD83 LON-LAT...this is OK but I prefer to work in web mercator (EPSG:3857)
 # create sf object with locations
 pts_sf <- st_as_sf(PLOT,
                    coords = c("LON", "LAT"),
@@ -93,7 +93,7 @@ if (showMaps) mapview(pts_sf)
 # retrieve the entwine index with metadata
 fetchUSGSProjectIndex(type = "entwineplus")
 
-# query the index to get the lidar projects covering the points with 160m circle
+# query the index to get the lidar projects covering the points (including a buffer)
 # this call returns the project boundaries that contain plots
 projects_sf <- queryUSGSProjectIndex(buffer = clipSize / 2, aoi = pts_sf)
 

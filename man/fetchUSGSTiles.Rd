@@ -30,9 +30,9 @@ different folders but have the same file name.}
 \value{
 An (invisible) atomic vector of integer codes corresponding to the
   \code{urls}. The values are those returned from the \code{download.file}
-  function calls for each of the \code{urls}. You can easily count the
-  number of \code{urls} successfully fetched using
-  \code{sum(value == 0, na.rm = TRUE)}.
+  function calls for each of the \code{urls}, 0 for success and non-zero
+  for failure. You can easily count the number of \code{urls} successfully
+  fetched using \code{sum(value == 0, na.rm = TRUE)}.
 }
 \description{
 Download one or more files (usually lidar data tiles) described
