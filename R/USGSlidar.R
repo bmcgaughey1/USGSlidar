@@ -379,6 +379,95 @@ fetchUSGSTiles <- function(
   }
 }
 
+# ---------- computeClipBufferForCONUS
+#
+#' USGS Lidar Toolkit -- Compute buffer size(s) to correct for distance
+#' distortions associated with the web Mercator projection (EPSG:3857)
+#'
+#' The web Mercator projection does not maintain accurate distances. The
+#' distortions increase as you move away from the equator so a correction
+#' is needed to produce sample areas that are consistent in size for
+#' a set of samples across a range latitudes.
+#'
+#' \code{computeClipBufferForCONUS} uses a correction multiplier developed
+#' for latitudes ranging from 23-49 degrees by comparing 1000m squares
+#' defined in the web Mercator projection to their sized when reprojected
+#' into UTM. While this is still not a perfect solution, it provides
+#' a correction factor that gets you very close to the desired sample
+#' size.
+#'
+#' @param desiredBuffer A single numeric value defining the desired buffer
+#'   size or a vector of numeric values with the desired buffer sizes. If a
+#'   vector of sizes is provided, it must be the same length as the vector
+#'   provided for \code{centerPointLatitude}.
+#' @param centerPointLatitude A single numeric value or vector of values
+#'   containing the latitude of the sample points.
+#' @param points A \code{SpatialPoints*} or \code{sf} object containing
+#'   the sample point locations. The object must contain a coordinate system
+#'   definition corresponding to the web Mercator projection. The points
+#'   will be projected into NAD83 lon-lat and the resulting latitude values
+#'   will be used to compute the buffer size(s).
+#' @return A single value that is the buffer width needed to produce the
+#'   \code{desiredBuffer} or a vector of buffer widths needed to produce the
+#'   \code{desiredBuffer} for each sample point.
+#' @examples
+#' \dontrun{
+#' computeClipBufferForCONUS(1000, 41.5)
+#' }
+#' @export
+computeClipBufferForCONUS <- function(
+  desiredBuffer,
+  centerPointLatitude = NULL,
+  points = NULL
+) {
+  buf <- NULL
+
+  # check for latitude value(s) or points
+  if (is.null(centerPointLatitude) && is.null(points)) {
+    stop("You must provide either a latitude value or a set of points")
+    return(NULL)
+  }
+
+  if (!is.null(centerPointLatitude) && !is.null(points)) {
+    stop("You can only provide latitude values or a set of points...not both")
+    return(NULL)
+  }
+
+  # check for latitudes
+  if (!is.null(centerPointLatitude)) {
+    # check length of desiredBuffer
+    if (length(desiredBuffer) > 1) {
+      if (length(desiredBuffer) != length(centerPointLatitude)) {
+        stop("desiredBuffer must contain a value for each centerPointLatitude")
+        return(NULL)
+      }
+    }
+
+    buf <- desiredBuffer * (1.0 + ((-0.3065 + 0.3780 * centerPointLatitude)^2 / 1000))
+  }
+
+  # check for points
+  if (!is.null(points)) {
+    t <- points
+    if (inherits(points, "Spatial")) {
+      t <- sf::st_as_sf(points)
+    }
+
+    if (length(desiredBuffer) > 1) {
+      if (length(desiredBuffer) != nrow(t)) {
+        stop("desiredBuffer must contain a value for each point")
+        return(NULL)
+      }
+    }
+
+    # project to NAD83 lon-lat
+    t <- sf::st_transform(t, 4269)
+
+    buf <- desiredBuffer * (1.0 + ((-0.3065 + 0.3780 * st_coordinates(t)[, 2])^2 / 1000))
+  }
+  return(buf)
+}
+
 # ---------- queryUSGSProjectIndex
 #
 #' USGS Lidar Toolkit -- Identify USGS Lidar Project Covering Area

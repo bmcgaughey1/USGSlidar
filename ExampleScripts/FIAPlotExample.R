@@ -22,6 +22,7 @@ if (useEvalidator) {
   # code from Jim Ellenwood to read PLOT data from Evalidator
   # works as of 9/30/2021 but the API may go away in the future
   library(httr)
+  library(jsonlite)
 
   # get a table of state numeric codes to use with Evalidator
   form <- list('colList'= 'STATECD,STATE_ABBR', 'tableName' = 'REF_RESEARCH_STATION',
@@ -93,9 +94,17 @@ if (showMaps) mapview(pts_sf)
 # retrieve the entwine index with metadata
 fetchUSGSProjectIndex(type = "entwineplus")
 
+# compute buffer sizes to use to "correct" distortions related to web mercator projection
+# for this example, I use the plot locations in web mercator. The locations will be projected
+# to NAD83 LON-LAT to get the latitude for each plot location. The buffer (1/2 plot size) will
+# be different for every plot.
+#
+# NOTE: all calls to queryUSGS... functions will use the new buffers instead of clipSize / 2
+plotBuffers <- computeClipBufferForCONUS(clipSize / 2, points = pts_sf)
+
 # query the index to get the lidar projects covering the points (including a buffer)
 # this call returns the project boundaries that contain plots
-projects_sf <- queryUSGSProjectIndex(buffer = clipSize / 2, aoi = pts_sf)
+projects_sf <- queryUSGSProjectIndex(buffer = plotBuffers, aoi = pts_sf)
 
 # subset the results to drop the KY statewide aggregated point set
 # there are a few lidar projects like this where data from several projects
@@ -107,7 +116,7 @@ if (showMaps) mapview(projects_sf)
 
 # query the index again to get the point data populated with lidar project information
 # this call returns the sample locations (polygons) with lidar project attributes
-real_polys_sf <- queryUSGSProjectIndex(buffer = clipSize / 2, aoi = pts_sf, return = "aoi", shape = "square")
+real_polys_sf <- queryUSGSProjectIndex(buffer = plotBuffers, aoi = pts_sf, return = "aoi", shape = "square")
 
 # query the index again to get the point data populated with lidar project information
 # this call returns the sample locations (points) with lidar project attributes
