@@ -350,7 +350,7 @@ fetchUSGSTiles <- function(
         stop("could not create destfolder: ", destfolder)
     }
 
-    # check from trailing slash
+    # check for trailing slash
     if (destfolder[length(destfolder)] != "/")
       destfolder <- paste(destfolder, "/", sep = "")
   }
