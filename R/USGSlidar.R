@@ -56,8 +56,7 @@ fetchFile <- function(
 ) {
   # assume everything is good and just download the url to destfile
   ret <- tryCatch(utils::download.file(url, destfile, method = method, mode = mode, ...),
-                  error = function(e) 1
-                  )
+                  error = function(e) 1)
   invisible(ret)
 }
 
