@@ -1,5 +1,8 @@
 # code demonstrating the use of the USGS tile index to find and clip data for sample locations
 #
+# these examples are works in progress. the code may be useful but it has some things specific to
+# the developers file system.
+#
 library(sf)
 library(dplyr)
 library(tidyverse)

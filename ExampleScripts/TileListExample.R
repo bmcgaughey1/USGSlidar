@@ -1,4 +1,8 @@
 # example to find USGS tiles covering a set of polygons
+#
+# these examples are works in progress. the code may be useful but it has some things specific to
+# the developers file system.
+#
 library(sf)
 library(dplyr)
 library(tidyverse)
@@ -20,6 +24,9 @@ makeURLForTiles <- function(
   baseURL <- aoi$lpc_link
   if (!endsWith(baseURL, "/")) baseURL <- paste0(baseURL, "/")
 
+  # original logic assumed that the lpc_pub_date should be added if it is valid. However, I found a
+  # project where the lpc_pub_date was valid but was not included in the tile names.
+  # WA_Olympic_Peninsula_2013...project_id = 6373, workunit_id = 6371
   if (!is.na(aoi$lpc_pub_date)) {
     URL <- paste0(baseURL, folder, "/", prefix, aoi$workunit, "_", tiles$tile_id, "_LAS_", lubridate::year(aoi$lpc_pub_date),".laz")
   } else {
@@ -158,3 +165,42 @@ tURLs <- stringr::str_replace(tURLs, "_LAS_2020", "")
 
 res2 <- fetchUSGSTiles(tileFolder, tURLs) # second project...LAZ file names not formed the same as the first project
 
+
+# one tile was missed...I had one tile with a bad tile_id (NA). I suspect this was it so I manually build the URL
+# and fetched it separately
+# ran loop above with 1:1 and then used the first URL
+# "https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/USGS_LPC_WA_Olympic_Peninsula_2013_LAS_2015/laz/USGS_LPC_WA_Olympic_Peninsula_2013_10TDT200900_LAS_2015.laz"
+URL <- str_replace(URLs[1], "10TDT200900", "10TDT180910")
+res <- fetchUSGSTiles(tileFolder, URL)
+
+# *****************************************************************************
+# *****************************************************************************
+# code to combine treatment units and reproject to 26910 (UTM10)
+Aa <- st_read("H:/T3_GIS/Final_layout/WS_Aa_June24_2021.shp")
+Ba <- st_read("H:/T3_GIS/Final_layout/WS _Ba_June24_2021.shp")
+Ca <- st_read("H:/T3_GIS/Final_layout/WS_Ca_June24_2021.shp")
+Da <- st_read("H:/T3_GIS/Final_layout/WS_Da_June24_2021.shp")
+
+Canew <- Ca[, c(1:11, 13)]
+
+Aanew <- Aa[, as.vector(colnames(Canew))]
+Banew <- Ba[, as.vector(colnames(Canew))]
+Danew <- Da[, as.vector(colnames(Canew))]
+
+# add block identifier
+Aanew$ID <- "Aa"
+Banew$ID <- "Ba"
+Canew$ID <- "Ca"
+Danew$ID <- "Da"
+
+# merge units
+units <- rbind(Aanew, Banew, Canew, Danew)
+mapview(units, zcol = "ID", burst = TRUE)
+
+# reproject
+st_crs(units)
+units_UTM10 <- st_transform(units, crs = 26910)
+st_crs(units_UTM10)
+
+st_write(units_UTM10, "H:/T3_GIS/Final_layout/Units_UTM10.shp")
+st_write(units_UTM10, "H:/T3_GIS/Final_layout/Units_UTM10.gpkg")

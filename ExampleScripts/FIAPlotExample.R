@@ -146,7 +146,9 @@ real_pts_sf$avedate <- real_pts_sf$startdate + ((real_pts_sf$enddate - real_pts_
 real_pts_sf$measdate <- make_date(real_pts_sf$MEASYEAR, real_pts_sf$MEASMON, real_pts_sf$MEASDAY)
 
 # we only want plots measured within +- some time interval
-dateHalfRange <- years(1) + months(6)
+# changed from 18 months to 30 months 2/24/2022
+#dateHalfRange <- years(1) + months(6)
+dateHalfRange <- years(2) + months(6)
 
 # do the date filtering on the POLYGONS
 target_polys_sf <- subset(real_polys_sf, (measdate - avedate) >= -dateHalfRange & (measdate - avedate) <= dateHalfRange)
@@ -159,7 +161,9 @@ if (showMaps) mapview(target_pts_sf)
 cat("Total number of plots in FIADB for ", state, ": ", totalPlots, "\r\n",
   "Plots with measurements since 01/01/2010: ", plotsSince2010, "\r\n",
   "   Of these, ", nrow(pts_sf), " have lidar coverage", "\r\n",
-  "   Of these, ", nrow(target_pts_sf), " have lidar coverage within 18 months of field measurements", "\r\n"
+  "   Of these, ", nrow(target_pts_sf), " have lidar coverage within ",
+  year(dateHalfRange) * 12 + month(dateHalfRange),
+  " months of field measurements", "\r\n"
 )
 
 # if we need a list of the lidar projects that cover the final target plot POLYGONS, we need to check to see if
