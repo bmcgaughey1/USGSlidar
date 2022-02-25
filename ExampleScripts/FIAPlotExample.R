@@ -147,14 +147,30 @@ real_pts_sf$measdate <- make_date(real_pts_sf$MEASYEAR, real_pts_sf$MEASMON, rea
 
 # we only want plots measured within +- some time interval
 # changed from 18 months to 30 months 2/24/2022
-#dateHalfRange <- years(1) + months(6)
+old_dateHalfRange <- years(1) + months(6)
 dateHalfRange <- years(2) + months(6)
 
-# do the date filtering on the POLYGONS
-target_polys_sf <- subset(real_polys_sf, (measdate - avedate) >= -dateHalfRange & (measdate - avedate) <= dateHalfRange)
+# flag to control filtering behavior...
+#   if TRUE, target plots and pts will include all plots in the new date range
+#   if FALSE, target plots and pts will only include plots outside the old date range and within the new range
+#subsetBehavior <- TRUE
+subsetBehavior <- FALSE
 
-# do the date filtering on the POINTS
-target_pts_sf <- subset(real_pts_sf, (measdate - avedate) >= -dateHalfRange & (measdate - avedate) <= dateHalfRange)
+if (subsetBehavior) {
+  # do the date filtering on the POLYGONS
+  target_polys_sf <- subset(real_polys_sf, (measdate - avedate) >= -dateHalfRange & (measdate - avedate) <= dateHalfRange)
+
+  # do the date filtering on the POINTS
+  target_pts_sf <- subset(real_pts_sf, (measdate - avedate) >= -dateHalfRange & (measdate - avedate) <= dateHalfRange)
+} else {
+  # do the date filtering on the POLYGONS
+  target_polys_sf <- subset(real_polys_sf, ((measdate - avedate) > old_dateHalfRange & (measdate - avedate) <= dateHalfRange) |
+                                           ((measdate - avedate) >= -dateHalfRange & (measdate - avedate) < -old_dateHalfRange))
+
+  # do the date filtering on the POINTS
+  target_pts_sf <- subset(real_pts_sf, ((measdate - avedate) > old_dateHalfRange & (measdate - avedate) <= dateHalfRange) |
+                                       ((measdate - avedate) >= -dateHalfRange & (measdate - avedate) < -old_dateHalfRange))
+}
 
 if (showMaps) mapview(target_pts_sf)
 
