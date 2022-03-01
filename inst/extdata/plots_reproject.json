@@ -8,6 +8,7 @@
     "threads": "4"
   },
   {
+    "tag": "reproject",
     "type":"filters.reprojection",
     "out_srs":"EPSG:3857"
   },
