@@ -1,0 +1,28 @@
+[
+  {
+    "tag": "ept_reader",
+    "type": "readers.ept",
+    "bounds": "placeholder",
+    "filename": "placeholder",
+    "resolution": "0.1",
+    "threads": "4"
+  },
+  {
+    "type":"filters.reprojection",
+    "out_srs":"EPSG:3857"
+  },
+  {
+    "tag": "las_writer",
+    "type": "writers.las",
+    "compression": "laszip",
+    "extra_dims": "all",
+    "filename": "placeholder",
+    "forward": "header, vlr",
+    "offset_x": "auto",
+    "offset_y": "auto",
+    "offset_z": "auto",
+    "scale_x": "0.01",
+    "scale_y": "0.01",
+    "scale_z": "0.01"
+  }
+]

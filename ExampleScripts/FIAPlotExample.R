@@ -191,13 +191,23 @@ cat("Total number of plots in FIADB for ", state, ": ", totalPlots, "\r\n",
 # NOTE: I am not using the project list for anything in this example
 target_projects_sf <- subset(projects_sf, name %in% unique(target_polys_sf$name))
 
+# set this to TRUE to use the template file that reprojects incoming data to web mercator (EPSG=3857)
+#projectTo3857 <- TRUE
+projectTo3857 <- FALSE
+
+if (projectTo3857) {
+  templateFile <- system.file("extdata", "plots_reproject.json", package = "USGSlidar", mustWork = TRUE)
+} else {
+  templateFile <- system.file("extdata", "plots.json", package = "USGSlidar", mustWork = TRUE)
+}
+
 # build PDAL pipelines...use template included with library...basic clip with no additional processing
 buildPDALPipelineENTWINE(target_polys_sf,
                          IDColumnLabel = "CN",
                          URLColumnLabel = "url",
                          pipelineOutputFolder = "G:/R_Stuff/FIAExample/pipelines",
                          pipelineOutputFileBaseName = "Plot",
-                         pipelineTemplateFile = "",
+                         pipelineTemplateFile = templateFile,
                          clipOutputFolder = "G:/R_Stuff/FIAExample/clips",
                          verbose = 500
 )
