@@ -1787,9 +1787,9 @@ generatePolygonSamplePoints <- function(
 #'   (LAZ) format. Users can supply their own template (in json format) but only the values
 #'   mentioned for the ept_reader and las_writer tags will be modified.
 #'
-#'   The pipeline template provided with the USGSlidar package is stored in the install folder
-#'   for the package under the \code{extdata} folder. While you can directly modify this copy
-#'   of the file, it would be better to copy the file to another location, make the desired
+#'   The pipeline templates provided with the USGSlidar package are stored in the install folder
+#'   for the package under the \code{extdata} folder. While you can directly modify these copies
+#'   of the files, it would be better to copy them to another location, make the desired
 #'   changes and then specify your new template using the \code{pipelineTemplateFile} parameter.
 #'
 #'   The file name for the data clips is formed using the basename of the value in the
