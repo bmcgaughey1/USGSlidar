@@ -727,6 +727,7 @@ queryUSGSProjectIndex <- function(
 
     # invalid
     # na.omit is causing problems...not sure what the original intent was for using na.omit so I removed it
+    # also not sure what package na.omit was coming from. Could be terra or stats
     #invalidCount <- sum(any(na.omit(sf::st_is_valid(projectsWebMerc)) == FALSE))
     invalidCount <- sum(any(sf::st_is_valid(projectsWebMerc)) == FALSE)
     if (invalidCount)
