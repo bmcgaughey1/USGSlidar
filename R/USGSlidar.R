@@ -464,7 +464,7 @@ computeClipBufferForCONUS <- function(
     # project to NAD83 lon-lat
     t <- sf::st_transform(t, 4269)
 
-    buf <- desiredBuffer * (1.0 + ((-0.3065 + 0.3780 * st_coordinates(t)[, 2])^2 / 1000))
+    buf <- desiredBuffer * (1.0 + ((-0.3065 + 0.3780 * sf::st_coordinates(t)[, 2])^2 / 1000))
   }
   return(buf)
 }
@@ -716,17 +716,19 @@ queryUSGSProjectIndex <- function(
 
     # check geometries
     # empty
-    emptyCount <- sum(is.na(st_dimension(projectsWebMerc)))
+    emptyCount <- sum(is.na(sf::st_dimension(projectsWebMerc)))
     if (emptyCount)
       message("Found", emptyCount, "features with empty geometries")
 
     # corrupt
-    corruptCount <- sum(is.na(st_is_valid(projectsWebMerc)))
+    corruptCount <- sum(is.na(sf::st_is_valid(projectsWebMerc)))
     if (corruptCount)
       message("Found", corruptCount, "features with corrupt geometries")
 
     # invalid
-    invalidCount <- sum(any(na.omit(st_is_valid(projectsWebMerc)) == FALSE))
+    # na.omit is causing problems...not sure what the original intent was for using na.omit so I removed it
+    #invalidCount <- sum(any(na.omit(sf::st_is_valid(projectsWebMerc)) == FALSE))
+    invalidCount <- sum(any(sf::st_is_valid(projectsWebMerc)) == FALSE)
     if (invalidCount)
       message("Found ", invalidCount, " features with invalid geometries")
 
@@ -737,9 +739,12 @@ queryUSGSProjectIndex <- function(
         return(NULL)
       } else {
         if (verbose) message("--Attempting to clean index polygons using st_make_valid")
-        projectsWebMerc <- st_make_valid(projectsWebMerc)
-        if (any(na.omit(st_is_valid(projectsWebMerc) == FALSE))) {
-          if (verbose) message("--After st_make_valid there are still invalid geometries")
+        projectsWebMerc <- sf::st_make_valid(projectsWebMerc)
+
+        # na.omit is causing problems...not sure what the original intent was for using na.omit so I removed it
+        #if (any(stats::na.omit(sf::st_is_valid(projectsWebMerc) == FALSE))) {
+        if (any(sf::st_is_valid(projectsWebMerc) == FALSE)) {
+            if (verbose) message("--After st_make_valid there are still invalid geometries")
           if (verbose) message("--Attempting to clean index polygons using st_buffer")
           #projectsWebMerc <- sf::st_buffer(projectsWebMerc, 0.0)
         } else {
