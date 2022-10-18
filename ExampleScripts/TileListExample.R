@@ -1,7 +1,10 @@
 # example to find USGS tiles covering a set of polygons
 #
 # these examples are works in progress. the code may be useful but it has some things specific to
-# the developers file system.
+# the developers file system. The example retrieves data for the T3 study area on the Olympic Peninsula
+# in Washington state. You will find some code that directly manipulates file names for files on the
+# USGS server. This code, while useful to see how file naming in inconsistent, may not be useful or needed for
+# other areas.
 #
 library(sf)
 library(dplyr)
@@ -13,6 +16,13 @@ library(USGSlidar)
 # functions
 # build a URL using the lpc_link field. This logic seems to work for many projects. However, the folder
 # structure isn't always consistent so there may be cases where the constructed URLs are not valid.
+#
+# It would be useful to have logic to test various name building strategies by attempting to fetch a file.
+# I haven't found any projects where the naming is different within the project so once you figure out the
+# naming logic, it should work for the entire project (all tiles in the project). The only downside to testing
+# strategies is that you could end up trying to fetch large tiles so there would be some time wasted trying to
+# sort out the logic. It might be possible to just check for the existence of a file without actually fetching the
+# file.
 makeURLForTiles <- function(
   aoi,
   tiles,

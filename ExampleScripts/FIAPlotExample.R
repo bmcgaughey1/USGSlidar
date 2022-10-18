@@ -79,7 +79,7 @@ totalPlots <- nrow(PLOT)
 PLOT <- subset(PLOT, MEASYEAR >= 2010)
 plotsSince2010 <- nrow(PLOT)
 
-# FIADB locations are NAD83 LON-LAT...this is OK but I prefer to work in web mercator (EPSG:3857)
+# FIADB locations are NAD83 LON-LAT (EPSG:4269)...this is OK but I prefer to work in web mercator (EPSG:3857)
 # create sf object with locations
 pts_sf <- st_as_sf(PLOT,
                    coords = c("LON", "LAT"),
@@ -91,68 +91,75 @@ pts_sf <- st_transform(pts_sf, 3857)
 
 if (showMaps) mapview(pts_sf)
 
-# retrieve the entwine index with metadata
+# retrieve the entwine index with metadata...the enhanced entwine index comes from a github site
+# that is updated every 3 days.
 fetchUSGSProjectIndex(type = "entwineplus")
 
-# compute buffer sizes to use to "correct" distortions related to web mercator projection
-# for this example, I use the plot locations in web mercator. The locations will be projected
+# Compute buffer sizes to use to "correct" distortions related to web mercator projection.
+# For this example, I use the plot locations in web mercator. The locations will be projected
 # to NAD83 LON-LAT to get the latitude for each plot location. The buffer (1/2 plot size) will
 # be different for every plot.
 #
 # NOTE: all calls to queryUSGS... functions will use the new buffers instead of clipSize / 2
 plotBuffers <- computeClipBufferForCONUS(clipSize / 2, points = pts_sf)
 
-# query the index to get the lidar projects covering the points (including a buffer)
-# this call returns the project boundaries that contain plots
+# Query the index to get the lidar projects covering the points (including a buffer).
+# This call returns the boundaries for lidar projects that contain plots.
 projects_sf <- queryUSGSProjectIndex(buffer = plotBuffers, aoi = pts_sf)
 
-# subset the results to drop the KY statewide aggregated point set
-# there are a few lidar projects like this where data from several projects
+# subset the results to drop the KY statewide aggregated point set.
+# There are a few lidar projects like this where data from several projects
 # were aggregated. Unfortunately, the naming isn't consistent so you have to
 # know something about the data.
+#
+# This example was developed for Tennessee. For another state that doesn't border Kentucky,
+# this line can be omitted. Indiana also has an aggregate project as well as individual projects
+# for each county.
 projects_sf <- subset(projects_sf, name != "KY_FullState")
 
 if (showMaps) mapview(projects_sf)
 
-# query the index again to get the point data populated with lidar project information
-# this call returns the sample locations (polygons) with lidar project attributes
+# Query the index again to get the point data populated with lidar project information.
+# This call returns the sample locations (polygons) with lidar project attributes.
 real_polys_sf <- queryUSGSProjectIndex(buffer = plotBuffers, aoi = pts_sf, return = "aoi", shape = "square")
 
-# query the index again to get the point data populated with lidar project information
-# this call returns the sample locations (points) with lidar project attributes
+# query the index again to get the point data populated with lidar project information.
+# This call returns the sample locations (points) with lidar project attributes.
 real_pts_sf <- queryUSGSProjectIndex(buffer = 0, aoi = pts_sf, return = "aoi")
 
 # Manipulate acquisition date information. Ideally, this functionality would be
 # part of the USGSlidar package but there is no consistent format (column names)
-# for the date information
+# for the date information between different lidar data sources.
 projects_sf <- subset(projects_sf, !is.na(collect_start) & !is.na(collect_end))
 real_polys_sf <- subset(real_polys_sf, !is.na(collect_start) & !is.na(collect_end))
 real_pts_sf <- subset(real_pts_sf, !is.na(collect_start) & !is.na(collect_end))
 
-# do the date math to allow filtering of the sample POLYGONS
-# this code is specific to the Entwine database structure populated using the PopulateEntwineDB.R code
-# column names will be different for other index types.
-# build a datetime value for start and end of collection using lubridate functions
+# Do the date math to allow filtering of the sample POLYGONS.
+# This code is specific to the Entwine database structure populated using the PopulateEntwineDB.R code.
+# Column names will be different for other index types.
+# Build a datetime value for start and end of collection using lubridate functions.
 real_polys_sf$startdate <- ymd(real_polys_sf$collect_start)
 real_polys_sf$enddate <- ymd(real_polys_sf$collect_end)
 real_polys_sf$avedate <- real_polys_sf$startdate + ((real_polys_sf$enddate - real_polys_sf$startdate) / 2)
 real_polys_sf$measdate <- make_date(real_polys_sf$MEASYEAR, real_polys_sf$MEASMON, real_polys_sf$MEASDAY)
 
-# repeat the date math to allow filtering of the sample POINTS
-# build a datetime value for start and end of collection using lubridate functions
+# Repeat the date math to allow filtering of the sample POINTS.
+# Build a datetime value for start and end of collection using lubridate functions.
 real_pts_sf$startdate <- ymd(real_pts_sf$collect_start)
 real_pts_sf$enddate <- ymd(real_pts_sf$collect_end)
 real_pts_sf$avedate <- real_pts_sf$startdate + ((real_pts_sf$enddate - real_pts_sf$startdate) / 2)
 real_pts_sf$measdate <- make_date(real_pts_sf$MEASYEAR, real_pts_sf$MEASMON, real_pts_sf$MEASDAY)
 
-# we only want plots measured within +- some time interval
-# changed from 18 months to 30 months 2/24/2022
+# We only want plots measured within +- some time interval.
+# Changed from 18 months to 30 months 2/24/2022.
 old_dateHalfRange <- years(1) + months(6)
 dateHalfRange <- years(2) + months(6)
 
 # flag to control filtering behavior...
 #   if TRUE, target plots and pts will include all plots in the new date range
 #   if FALSE, target plots and pts will only include plots outside the old date range and within the new range
+#
+# For "normal" use, subsetBehavior should be TRUE
 #subsetBehavior <- TRUE
 subsetBehavior <- FALSE
 
@@ -231,8 +238,8 @@ target_polys_sf$ClipFile <- lasFile
 #   colClasses = c("CN"="character", "SRV_CN"="character", "CTY_CN"="character", "PREV_PLT_CN"="character")
 write.csv(st_drop_geometry(target_polys_sf), paste0(state, "Plots.csv"))
 
-
-
+# notes specific to the author's computer configuration:
+#
 # to run the pipelines, open a miniconda prompt and activate pdalworking environment,
 # then run the RunME.bat file in the pipelines folder
 #

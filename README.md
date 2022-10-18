@@ -4,7 +4,6 @@
 # USGSlidar
 
 <!-- badges: start -->
-
 <!-- badges: end -->
 
 The USGSlidar package was developed to make it somewhat easy to query
@@ -66,7 +65,7 @@ to CRAN at some point but no promises.
 not previously used **devtools**, use the commented line of code to
 install the package. Note that this will also install several additional
 packages needed for devtools. If you do not want the vignettes, set
-*build\_vignettes = FALSE*.
+*build_vignettes = FALSE*.
 
 You can install the development version from
 [GitHub](https://github.com/) with:
@@ -89,7 +88,7 @@ these problems but has been slow to correct them.
 
 In addition, the TESM tile index does not include sufficient information
 to fully locate the tile (LAS/LAZ file) on the rockyweb server. The
-tile\_id field in the TESM index is just a tile identifier and does not
+tile_id field in the TESM index is just a tile identifier and does not
 (usually) fully identify the file on the server. The logic used to
 create the actual file names seems to vary depending on the lidar
 project. For recent projects, the actual file names appear to be
@@ -97,49 +96,49 @@ constructed using the project name and the year the point data were
 published. Older projects do not include information for the publication
 year in the file names.
 
-While the WESM index contains a lpc\_link field that is presumably the
+While the WESM index contains a lpc_link field that is presumably the
 URL for the point files associated with a project, the URL is incomplete
 and does not include the actual folder containing the point files.
 Usually, the point files are in a folder named “laz” or “LAZ” but some
-projects have point files in a folder named “LAS”. The lpc\_link URLs
-are often missing the trailing “/” so code that uses them needs to check
-for the trailing “/” and add it if missing.
+projects have point files in a folder named “LAS”. The lpc_link URLs are
+often missing the trailing “/” so code that uses them needs to check for
+the trailing “/” and add it if missing.
 
 ### Example
 
 The data for Glacier Peak in Washington state is identified in WESM by:
 
-  - workunit = “WA\_GlacierPeak\_2014”
-  - workunit = 18330
-  - project = “Glacier\_Peak\_WA\_QL1\_LiDAR”
-  - project\_id = 18332
-  - lpc\_pub\_date = “2016-08-08”
-  - lpc\_link =
+-   workunit = “WA_GlacierPeak_2014”
+-   workunit = 18330
+-   project = “Glacier_Peak_WA_QL1_LiDAR”
+-   project_id = 18332
+-   lpc_pub_date = “2016-08-08”
+-   lpc_link =
     “<https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/USGS_LPC_WA_GlacierPeak_2014_LAS_2016/>”
 
 Data for this area were collected in 2014-2015 and published in 2016.
 The point data files area actually located in
 “<https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/USGS_LPC_WA_GlacierPeak_2014_LAS_2016/laz/>”
 and individual files names look like this:
-“USGS\_LPC\_WA\_GlacierPeak\_2014\_10TFU1514\_LAS\_2016.laz”
+“USGS_LPC_WA_GlacierPeak_2014_10TFU1514_LAS_2016.laz”
 
 The record in the TESM tile index for the same tile contains the
 following:
 
-  - tile\_id = “10TFU1514”
-  - project = “Glacier\_Peak\_WA\_QL1\_LiDAR”
-  - project\_id = 18332
-  - workunit\_id = 18330
+-   tile_id = “10TFU1514”
+-   project = “Glacier_Peak_WA_QL1_LiDAR”
+-   project_id = 18332
+-   workunit_id = 18330
 
 For this project and tile, we can construct a URL as follows (R syntax
 using lubridate package for year() function): URL \<-
-paste0(WESM$lpc\_link, “laz/”, “USGS\_LPC\_”, WESM$workunit, "\_“,
-TESM$tile\_id,”\_LAS\_“, year(WESM$lpc\_pub\_date),”.laz")
+paste0(WESM\$lpc_link, “laz/”, “USGS_LPC\_”, WESM\$workunit, “\_“,
+TESM\$tile_id,”\_LAS\_“, year(WESM\$lpc_pub_date),”.laz”)
 
-For projects where the lpc\_pub\_date is missing of set to NA, the URL
-may be as follows (but not tested for all projects): URL \<-
-paste0(WESM$lpc\_link, “laz/”, “USGS\_LPC\_”, WESM$workunit, "\_“,
-TESM$tile\_id,”.laz")
+For projects where the lpc_pub_date is missing of set to NA, the URL may
+be as follows (but not tested for all projects): URL \<-
+paste0(WESM\$lpc_link, “laz/”, “USGS_LPC\_”, WESM\$workunit, “\_“,
+TESM\$tile_id,”.laz”)
 
 ## Example – See FIAPlotExample.R in the ExampleScripts folder
 
