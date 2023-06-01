@@ -188,6 +188,8 @@ queryMPCTileIndex <- function(
                 limit = 1000) |>
     #  ext_query("3dep:usgs_id" == "IN_Statewide_Opt2_B4_2017") |>
     rstac::get_request()
+#    rstac::items_sign(sign_fn = rstac::sign_planetary_computer())
+
 
   while (length(Filter(function(x) x$rel == "next", it_obj$links))) {
     it_obj <- rstac::items_next(it_obj)
@@ -196,7 +198,13 @@ queryMPCTileIndex <- function(
   if (is.null(it_obj)) return(NULL)
   if (length(it_obj) < 1) return(NULL)
 
+  it_obj <- rstac::items_sign(it_obj, sign_fn = rstac::sign_planetary_computer())
+  URLs <- rstac::assets_url(it_obj, asset_names = "data")
+
   tiles <- rstac::items_as_sf(it_obj)
+
+  # add URLS
+  tiles$URL <- URLs
 
   if (tolower(return) == "index") {
     # set return to target shapes with no target attribute information
