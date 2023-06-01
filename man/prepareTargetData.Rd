@@ -27,7 +27,7 @@ to create the area-of-interest. Can be 0 when used with \code{(x,y)} to
 return projects providing coverage for point location(s). Can be a
 vector of values corresponding to the number of objects in \code{aoi}
 allowing a different buffer size for each object when \code{aoi} is a
-\code{Spatial*} of \code{sf} object. \code{buffer} can be negative with
+\code{Spatial*} or \code{sf} object. \code{buffer} can be negative with
 polygon features to reduce the area considered. However, you may end up
 with weird shapes if the distance is larger than the width of the polygon.}
 
@@ -77,7 +77,20 @@ Prepare point or polygon data for use when querying to determine the lidar
   query objects so they can be used for other purposes.
 
   Units for \code{buffer} are the same as the horizontal units for the input features
-  so you shouldn't use data in LON-LAT with units of degrees.
+  so you shouldn't use data in LON-LAT with units of degrees. In addition, LON-LAT
+  coordinates are not allowed when working with Spatial* return types and \code{(x,y)}
+  inputs. If you must use LON-LAT coords, set returnType = "sf".
+
+  Ideally, you should use a projection for the input \code{(x,y)} or \code{aoi} that
+  preserves distances and areas so the buffered area is accurate. UTM is a good
+  choice. Web Mercator does not preserve distance or areas so the actual area produced
+  when buffering a point varies considerably as you go from mid to northern or
+  southern latitudes. You can use the \code{computeClipBufferForCONUS} function
+  to adjust the buffer width depending on the location of \code{(x,y)} or \code{aoi}.
+  This isn't a perfect solution but it gets you close. More accurate results
+  can be produced by projecting you \code{(x,y)} or \code{aoi} into UTM, calling
+  \code{prepareTargetData}, then reproject the returned features into the
+  desired projection.
 }
 \examples{
 prepareTargetData(-13540901, 5806426, 180, shape = "circle",

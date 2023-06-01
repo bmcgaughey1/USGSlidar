@@ -101,7 +101,20 @@ computeClipBufferForCONUS <- function(
 #'   query objects so they can be used for other purposes.
 #'
 #'   Units for \code{buffer} are the same as the horizontal units for the input features
-#'   so you shouldn't use data in LON-LAT with units of degrees.
+#'   so you shouldn't use data in LON-LAT with units of degrees. In addition, LON-LAT
+#'   coordinates are not allowed when working with Spatial* return types and \code{(x,y)}
+#'   inputs. If you must use LON-LAT coords, set returnType = "sf".
+#'
+#'   Ideally, you should use a projection for the input \code{(x,y)} or \code{aoi} that
+#'   preserves distances and areas so the buffered area is accurate. UTM is a good
+#'   choice. Web Mercator does not preserve distance or areas so the actual area produced
+#'   when buffering a point varies considerably as you go from mid to northern or
+#'   southern latitudes. You can use the \code{computeClipBufferForCONUS} function
+#'   to adjust the buffer width depending on the location of \code{(x,y)} or \code{aoi}.
+#'   This isn't a perfect solution but it gets you close. More accurate results
+#'   can be produced by projecting you \code{(x,y)} or \code{aoi} into UTM, calling
+#'   \code{prepareTargetData}, then reproject the returned features into the
+#'   desired projection.
 #'
 #' @param x Location or list of locations containing the easting for the center of
 #'   the area-of-interest.
@@ -112,7 +125,7 @@ computeClipBufferForCONUS <- function(
 #'   return projects providing coverage for point location(s). Can be a
 #'   vector of values corresponding to the number of objects in \code{aoi}
 #'   allowing a different buffer size for each object when \code{aoi} is a
-#'   \code{Spatial*} of \code{sf} object. \code{buffer} can be negative with
+#'   \code{Spatial*} or \code{sf} object. \code{buffer} can be negative with
 #'   polygon features to reduce the area considered. However, you may end up
 #'   with weird shapes if the distance is larger than the width of the polygon.
 #' @param shape Character string describing the shape of the sample area.
@@ -285,6 +298,9 @@ prepareTargetData <- function(
   } else {
     # create a sf object using (x,y), buffer, shape and crs
 
+    # there is a problem here if the CRS is lon-lat and returnType = "Spatial",
+    # geos buffer function won't work and process crashes.
+
     # make sure we have crs
     if (crs == "")
       stop("no crs provided for (x,y)")
@@ -402,4 +418,162 @@ prepareTargetData <- function(
   }
   return(target)
 }
+
+# ---------- createSampleAreas
+#
+#' USGS Lidar Toolkit -- Create sample areas that include a smaller target area.
+#'
+#' Create sample polygons to help obfuscate a sensitive location when requesting data
+#' from non-secure sources. The basic idea is to create a square or circular area that
+#' can be use to request data. The desired target location (and area) will be contained within
+#' the sample area but not centered on the sample area.
+#'
+#' @details Create polygons that can be used when requesting data from non-secure sources
+#'   that contain the specific target location. Polygons are randomly offset from the
+#'   target area centroid so there is no consistent relationship between the location of
+#'   the polygon and the target area.
+#'
+#'   Units for \code{buffer} are the same as the horizontal units for the input features
+#'   so you shouldn't use data in LON-LAT with units of degrees.
+#'
+#' @param aoi \code{Spatial*} or \code{sf} object containing a point(s) or polygon(s)
+#'   describing the target area(s) of interest. Can be points or polygons. Usually this
+#'   is a set of polygons representing the actual area for which you want data. For best results,
+#'   \code{aoi} should contain square or circular polygons. Sample areas generated for
+#'   irregular polygonal target areas may not fully contain the target area polygon.
+#' @param buffer Distance or list of distances added to the maximum bounding box dimension for \code{aoi}
+#'   to create the sample area polygon(s). Can be vector of values corresponding to the
+#'   number of objects in \code{aoi} allowing a different buffer size for each object
+#'   when \code{aoi} is a \code{Spatial*} or \code{sf} object. All values for \code{buffer}
+#'   must be larger than 0. Can not be specified with \code{sizeMultiplier}.
+#' @param sizeMultiplier Multiplier applied to the maximum bounding box dimensions for each \code{aoi}
+#'   object to compute the size of the sample area polygon. Can not be specified with \code{buffer}.
+#' @param shape Character string describing the shape of the sample area.
+#'   Valid values are \code{"square"} or \code{"circle"}.
+#' @param minOffsetProportion Proportion of \code{buffer} that will be used as the
+#'   minimum offset between the target location and the center of the sample polygon.
+#'   Setting \code{minOffsetProportion=0} will allow some sample polygons to have the
+#'   same location (centroid) as the target location.
+#' @param segments Number of segments to use when generating a circular
+#'   sample areas. When using a \code{SpatialPoint*} or \code{sf} object
+#'   with \code{shape = "circle"}, set \code{segments} to a rather large value (60
+#'   or higher) that is a multiple of 4. The \code{gBuffer} function from
+#'   \code{rgeos} and \code{st_buffer} function from \code{sf} are used to
+#'   build the sample areas and it accepts the number of segments in a quarter
+#'   circle so small values for \code{segments} may not produce good circles.
+#'   Values for \code{segments} that are not a multiple of 4 will not
+#'   produce circles with the correct number of segments.
+#' @return A set sample area polygons. The return type will
+#'   be the same as the \code{aoi} type.
+#' @examples
+#' pt1 <- sf::st_point(c(-13540901, 5806426 + 500))
+#' pt2 <- sf::st_point(c(-13540901 + 500, 5806426 - 500))
+#' pt3 <- sf::st_point(c(-13540901 - 500, 5806426))
+#' pt4 <- sf::st_point(c(-13540901 + 1000, 5806426 - 1000))
+#' id <- c("P1", "P2", "P3", "P4")
+#' x_sf <- sf::st_sf(data.frame(ID = id, stringsAsFactors = FALSE),
+#'   geom = sf::st_sfc(pt1, pt2, pt3, pt4),
+#'   crs = 3857)
+#'   pt_aoi <- prepareTargetData(aoi = x_sf, buffer = 75, shape = "circle")
+#' sample_areas <- createSampleAreas(aoi = pt_aoi, buffer = 500)
+#' @export
+createSampleAreas <- function(
+    buffer = 0,
+    sizeMultiplier = 0,
+    shape = "square",
+    aoi = "",
+    minOffsetProportion = 0.1,
+    segments = 60
+) {
+  if (length(buffer) == 1) {
+    if (sizeMultiplier == 0 && buffer == 0) stop("You must provide a value for either buffer or sizeMultiplier")
+    if (sizeMultiplier > 0 && buffer > 0) stop("You can not provide values for both buffer and sizeMultiplier")
+  } else {
+    if (min(buffer) == 0) stop("all values for buffer must be greater than 0")
+    if (sizeMultiplier > 0) stop("You can not provide values for both buffer and sizeMultiplier")
+  }
+
+  # See if we have a Spatial* object and convert to sf
+  returnSpatial <- FALSE
+  if (inherits(aoi, "Spatial")) {
+    # see if we have a Spatial* object
+    if (grepl("Spatial", class(aoi), ignore.case = FALSE)) {
+      if ((grepl("SpatialPolygons", class(aoi), ignore.case = FALSE)) ||
+          (grepl("SpatialPoints", class(aoi), ignore.case = FALSE))) {
+        pt_aoi <- sf::st_as_sf(aoi)
+        returnSpatial <- TRUE
+      }
+    }
+  } else if (any(grepl("sf", class(aoi), ignore.case = FALSE))) {
+    pt_aoi <- aoi
+  } else {
+    stop("aoi must be either a Spatial* or sf object")
+  }
+
+  # get centroids for aoi features
+  sf::st_agr(pt_aoi) <- "constant"
+  pt_camo <- sf::st_centroid(pt_aoi)
+
+  # get bounding box for each feature
+  st_bbox_by_feature = function(x) {
+    x = sf::st_geometry(x)
+    f <- function(y) sf::st_as_sfc(sf::st_bbox(y))
+    do.call("c", lapply(x, f))
+  }
+
+  t <- st_bbox_by_feature(pt_aoi)
+
+  # find max width/height for each feature and overall
+  maxDimList <- list()
+  for (i in 1:length(t)) {
+    w <- t[[i]][[1]][2,1] - t[[i]][[1]][1,1]
+    h <- t[[i]][[1]][3,2] - t[[i]][[1]][1,2]
+    maxDimList[i] <- max(w, h)
+  }
+  maxDim <- max(unlist(maxDimList))
+
+  # generate vectors of offsets around the true location for x and y
+  # for circles, we need to do a random distance and angle, then compute corresponding x and y
+  # for squares, we can do separate offsets for x and y
+  # if you want to force some shift, set the minOffsetProportion to a small value. 0 produces no minimum offset
+  # so you could end up with a case where the center of the camouflage area exactly matches the plot location.
+  maxOffset <- (buffer * 2 - unlist(maxDimList)) / 2
+  if (sizeMultiplier > 0) maxOffset <- (unlist(maxDimList) * sizeMultiplier - unlist(maxDimList)) / 2
+  if (shape == "square") {
+    offX <- stats::runif(nrow(pt_camo), maxOffset * minOffsetProportion, maxOffset * 2) - maxOffset
+    offY <- stats::runif(nrow(pt_camo), maxOffset * minOffsetProportion, maxOffset * 2) - maxOffset
+  } else {
+    dist <- stats::runif(nrow(pt_camo), maxOffset * minOffsetProportion, maxOffset)
+    #dist <- stats::runif(nrow(pt_camo), 0, maxOffset / 2)
+    angle <- stats::runif(nrow(pt_camo), 0, pi * 2)
+    offX <- dist * cos(angle)
+    offY <- dist * sin(angle)
+  }
+  # for square...old value maxOffset <- maxOffset / sqrt(2)
+
+
+  # apply shifts...loop is needed (I think) because we want a different shift for each polygon
+  # this will work for either points or polygons
+  ptCRS <- sf::st_crs(pt_camo)
+  for (i in 1:nrow(pt_camo)) {
+    pt_camo$geometry[[i]] <- pt_camo$geometry[[i]] + c(offX[i], offY[i])
+  }
+
+  # have to reset the coordinate system...the affine transformation (above) strips the crs
+  sf::st_crs(pt_camo) <- ptCRS
+
+  # generate the sample polygons
+  if (sizeMultiplier > 0)
+    poly_camo <- prepareTargetData(aoi = pt_camo, buffer = (unlist(maxDimList)) / 2 * sizeMultiplier, shape = shape)
+  else
+    poly_camo <- prepareTargetData(aoi = pt_camo, buffer = (unlist(maxDimList)) / 2 + buffer, shape = shape)
+
+  if (returnSpatial)
+    target <- sf::as_Spatial(poly_camo)
+  else
+    target <- poly_camo
+
+  return(target)
+}
+
 

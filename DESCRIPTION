@@ -15,6 +15,8 @@ Imports:
     sp,
     sf,
     stats,
+    rstac,
+    geojsonsf,
     urltools
 License: CC0
 Encoding: UTF-8
