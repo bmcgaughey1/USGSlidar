@@ -11,29 +11,6 @@ library(lubridate)
 
 library(USGSlidar)
 
-# functions
-# build a URL using the lpc_link field. This logic seems to work for many projects. However, the folder
-# structure isn't always consistent so there may be cases where the constructed URLs are not valid.
-makeURLForTiles <- function(
-  aoi,
-  tiles,
-  folder = "laz",
-  prefix = "USGS_LPC_",
-  extension = ".laz"
-) {
-  # check for trailing slash in baseURL
-  baseURL <- aoi$lpc_link
-  if (!endsWith(baseURL, "/")) baseURL <- paste0(baseURL, "/")
-
-  if (!is.na(aoi$lpc_pub_date)) {
-    URL <- paste0(baseURL, folder, "/", prefix, aoi$workunit, "_", tiles$tile_id, "_LAS_", lubridate::year(aoi$lpc_pub_date),".laz")
-  } else {
-    URL <- paste0(baseURL, folder, "/", prefix, aoi$workunit, "_", tiles$tile_id, ".laz")
-  }
-
-  return(URL)
-}
-
 # *****************************************************************************
 # *****************************************************************************
 
@@ -50,7 +27,6 @@ midX <- (bbMinX + bbMaxX) / 2
 midY <- (bbMinY + bbMaxY) / 2
 buffer <- (bbMaxX - bbMinX) / 2
 
-project <- "USGS_LPC_VA_FEMA_R3_Southwest_B_2016"
 epsg <- 6346
 
 showMaps <- TRUE
