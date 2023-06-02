@@ -178,6 +178,7 @@ prepareTargetData <- function(
   segments = 60,
   returnType = "sf"
 ) {
+  # sample edit
   if (inherits(aoi, "Spatial")) {
     # see if we have a Spatial* object
     if (grepl("Spatial", class(aoi), ignore.case = FALSE)) {
