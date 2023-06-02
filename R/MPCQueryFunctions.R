@@ -175,7 +175,7 @@ queryMPCTileIndex <- function(
 
   # query the MPC STAC index
   # simple approach is to use bounding box for all features in AOI
-  # more complex approach creates geojson object from AOI and uses interect= in call to stac_search
+  # more complex approach creates geojson object from AOI and uses intersect= in call to stac_search
 
   bbox <- sf::st_bbox(target84)
 
