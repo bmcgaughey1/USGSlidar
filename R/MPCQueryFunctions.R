@@ -2,10 +2,15 @@
 #
 #' USGS Lidar Toolkit -- Identify Microsoft Planetary Computer Lidar Tiles Covering Area
 #'
-#' Intersect a set of features (points or polygons) against the STAC index
+#' Intersect a set of features (points or polygons) against the lidar point data STAC index
 #' on Microsoft Planetary Computer to determine which tiles are needed to provide coverage for the
 #' features. This index contains every lidar point tile in the MPC-USGS lidar
 #' collection. Queries for features covering a large area can take some time.
+#'
+#' The MPC lidar collection contains all lidar data produced by USGS as of Fall 2022.
+#' Projects added to the USGS data collection after this date are currently not added
+#' to the MPC data collection. This could change in the future. Check MPC for additional
+#' information about the lidar data colection.
 #'
 #' @details Query the MPC tile index to find tiles that intersect the \code{buffer}ed
 #'   \code{(x,y)} point(s) or \code{buffer}ed feature(s) provided in \code{aoi}.
@@ -20,7 +25,7 @@
 #'   \code{Spatial*} or \code{sf} object. \code{buffer} can be negative with
 #'   polygon features to reduce the area considered. However, you may end up
 #'   with weird shapes if the distance is larger than the width of the polygon.
-#'   Data in \code{(x,y)} and \code{aoi} are projected into the web mercator
+#'   Data in \code{(x,y)} and \code{aoi} are projected into the UTM
 #'   coordinate reference system before the buffer operation is done so the
 #'   units for \code{buffer} are always meters.
 #' @param projectID Character string or list of character strings
@@ -77,15 +82,14 @@
 #'   }
 #' @export
 queryMPCTileIndex <- function(
-    x,
-    y,
+    x = NULL,
+    y = NULL,
     buffer = 0,
     projectID = NULL,    #?
     fieldname = "workunit_id",      #?
     shape = "square",
     aoi = NULL,
     crs = "",
-    index = "",
     segments = 60,
     return = "index",
     returnType = "sf",
@@ -124,9 +128,11 @@ queryMPCTileIndex <- function(
     sf::st_agr(target84) <- "constant"
 
     # get centroid...if multiple features, get centroid of unioned centroids
-    cent <- sf::st_centroid(target84)
-    if (nrow(cent) > 1) {
-      pt <- unlist(sf::st_geometry(sf::st_centroid(sf::st_union(cent))))
+    pt <- sf::st_centroid(target84)
+    if (nrow(pt) > 1) {
+      pt <- unlist(sf::st_geometry(sf::st_centroid(sf::st_union(pt))))
+    } else {
+      pt <- unlist(sf::st_geometry(pt))
     }
 
     # calculate EPSG code...need to do this before buffer so we can use meters as units
@@ -135,13 +141,13 @@ queryMPCTileIndex <- function(
     # transform to UTM
     targetUTM <- sf::st_transform(target84, EPSG)
   } else {
-    targetUTM <- ""
+    targetUTM <- NULL
   }
 
   # prepare feature data for query...may be based on point (x,y) or
   # aoi (Spatial* or sf* object)
   if (verbose) message("--Preparing target data")
-  targetUTM <- prepareTargetData(x, y, buffer, shape, targetUTM, crs, segments, returnType)
+  targetUTM <- prepareTargetData(x = x, y = y, buffer = buffer, shape = shape, aoi = targetUTM, crs = crs, segments = segments, returnType = returnType)
 
   if (is.null(aoi)) {
     # just in case returnType is not sf, convert
@@ -168,6 +174,9 @@ queryMPCTileIndex <- function(
 
     # transform to UTM
     targetUTM <- sf::st_transform(target84, EPSG)
+  } else {
+    # project prepared aoi
+    target84 <- sf::st_transform(targetUTM, 4326)
   }
 
   # set attribute-geometry relationship to constant...all attributes represent the entire polygon

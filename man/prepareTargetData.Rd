@@ -5,11 +5,11 @@
 \title{USGS Lidar Toolkit -- Prepare Target Data}
 \usage{
 prepareTargetData(
-  x,
-  y,
+  x = NULL,
+  y = NULL,
   buffer = 0,
   shape = "square",
-  aoi = "",
+  aoi = NULL,
   crs = "",
   segments = 60,
   returnType = "sf"
@@ -33,22 +33,23 @@ with weird shapes if the distance is larger than the width of the polygon.}
 
 \item{shape}{Character string describing the shape of the sample area.
 Valid values are \code{"square"} or \code{"circle"}. The buffer shape
-is the same for all objects specified by \code{(x,y)} or \code{aoi}.}
+is the same for all objects specified by \code{(x,y)} or \code{aoi}. For polygon
+features, \code{shape} affects the way vertices are buffered. In most cases,
+use \code{shape = "eound"} for the best result.}
 
 \item{aoi}{\code{Spatial*} or \code{sf} object containing a point(s) or polygon(s)
 describing the area(s) of interest. Can be points or polygons.}
 
-\item{crs}{Valid \code{proj4string} string defining the coordinate
-reference system of \code{(x,y)} or \code{aoi}. \code{crs} is required when using
-\code{(x,y)}. It is optional when using \code{aoi}. This can also be a valid
-\code{SRS_string} for use with the sp::CRS() function where it will be provided
-as the \code{projargs} argument. \code{crs} can also be an EPSG code (numeric).}
+\item{crs}{Valid \code{proj4string} string defining the coordinate reference
+system of \code{(x,y)}. \code{crs} can also be an EPSG code (numeric).
+\code{crs} is required when using \code{(x,y)}. \code{crs} is quietly ignored when using
+\code{aoi}.}
 
 \item{segments}{Number of segments to use when generating a circular
 area of interest. When using a \code{SpatialPoint*} or \code{sf} object
 with \code{shape = "circle"}, set \code{segments} to a rather large value (60
 or higher) that is a multiple of 4. The \code{gBuffer} function from
-\code{rgeos} and \code{st_buffer} function from \code{sf} are used to
+\code{rgeos} is used to
 build the sample areas and it accepts the number of segments in a quarter
 circle so small values for \code{segments} may not produce good circles.
 Values for \code{segments} that are not a multiple of 4 will not
@@ -71,26 +72,16 @@ available data coverage. The basic operation done by this function is to apply t
 \code{buffer} to the features.
 }
 \details{
-Prepare point or polygon data for use when querying to determine the lidar
-  project or tile coverage. Typically this preparation is done by the queryUSGSProjectIndex
-  or queryUSGSTileIndex functions but you can use prepareTargetData to build the
+Prepare point or polygon data for use when querying to determine a lidar
+  project or tile coverage. Typically this function is called by the queryUSGSProjectIndex,
+  queryUSGSTileIndex, or queryMPCTileIndex functions but you can use prepareTargetData to build the
   query objects so they can be used for other purposes.
 
-  Units for \code{buffer} are the same as the horizontal units for the input features
-  so you shouldn't use data in LON-LAT with units of degrees. In addition, LON-LAT
-  coordinates are not allowed when working with Spatial* return types and \code{(x,y)}
-  inputs. If you must use LON-LAT coords, set returnType = "sf".
+  Units for \code{buffer} are always meters.
 
-  Ideally, you should use a projection for the input \code{(x,y)} or \code{aoi} that
-  preserves distances and areas so the buffered area is accurate. UTM is a good
-  choice. Web Mercator does not preserve distance or areas so the actual area produced
-  when buffering a point varies considerably as you go from mid to northern or
-  southern latitudes. You can use the \code{computeClipBufferForCONUS} function
-  to adjust the buffer width depending on the location of \code{(x,y)} or \code{aoi}.
-  This isn't a perfect solution but it gets you close. More accurate results
-  can be produced by projecting you \code{(x,y)} or \code{aoi} into UTM, calling
-  \code{prepareTargetData}, then reproject the returned features into the
-  desired projection.
+  Features specified with \code{(x,y)} or
+  \code{aoi} are projected to UTM, the buffer is applied, then the features
+  are projected back to the original projection (or LON-LAT if applicable).
 }
 \examples{
 prepareTargetData(-13540901, 5806426, 180, shape = "circle",

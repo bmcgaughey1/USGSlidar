@@ -5,15 +5,14 @@
 \title{USGS Lidar Toolkit -- Identify Microsoft Planetary Computer Lidar Tiles Covering Area}
 \usage{
 queryMPCTileIndex(
-  x,
-  y,
+  x = NULL,
+  y = NULL,
   buffer = 0,
   projectID = NULL,
   fieldname = "workunit_id",
   shape = "square",
   aoi = NULL,
   crs = "",
-  index = "",
   segments = 60,
   return = "index",
   returnType = "sf",
@@ -35,7 +34,7 @@ allowing a different buffer size for each object when \code{aoi} is a
 \code{Spatial*} or \code{sf} object. \code{buffer} can be negative with
 polygon features to reduce the area considered. However, you may end up
 with weird shapes if the distance is larger than the width of the polygon.
-Data in \code{(x,y)} and \code{aoi} are projected into the web mercator
+Data in \code{(x,y)} and \code{aoi} are projected into the UTM
 coordinate reference system before the buffer operation is done so the
 units for \code{buffer} are always meters.}
 
@@ -101,12 +100,17 @@ A \code{SpatialPolygonsDataFrame} or \code{sf} object containing
   followed by attributes for the lidar tile polygons..
 }
 \description{
-Intersect a set of features (points or polygons) against the STAC index
+Intersect a set of features (points or polygons) against the lidar point data STAC index
 on Microsoft Planetary Computer to determine which tiles are needed to provide coverage for the
 features. This index contains every lidar point tile in the MPC-USGS lidar
 collection. Queries for features covering a large area can take some time.
 }
 \details{
+The MPC lidar collection contains all lidar data produced by USGS as of Fall 2022.
+Projects added to the USGS data collection after this date are currently not added
+to the MPC data collection. This could change in the future. Check MPC for additional
+information about the lidar data colection.
+
 Query the MPC tile index to find tiles that intersect the \code{buffer}ed
   \code{(x,y)} point(s) or \code{buffer}ed feature(s) provided in \code{aoi}.
 }

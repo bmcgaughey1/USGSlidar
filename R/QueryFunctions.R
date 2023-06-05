@@ -156,7 +156,7 @@ queryUSGSProjectIndex <- function(
     if (verbose) message("--Projecting target features to web mercator")
     targetWebMerc <- sf::st_transform(target, 3857)
   } else {
-    targetWebMerc <- ""
+    targetWebMerc <- NULL
   }
 
   # prepare feature data for query...may be based on point (x,y) or
@@ -483,7 +483,7 @@ queryUSGSTileIndex <- function(
     if (verbose) message("--Projecting target features to web mercator")
     targetWebMerc <- sf::st_transform(target, 3857)
   } else {
-    targetWebMerc <- ""
+    targetWebMerc <- NULL
   }
 
   # prepare feature data for query...may be based on point (x,y) or

@@ -10,6 +10,12 @@
 #' stored in geopackage format and can be somewhat large. The index
 #' is refreshed whenever new data is added to the USGS collection.
 #'
+#' When retrieving large files, it may be necessary to increase the timeout period so
+#' downloads can complete. This is done using the following line of code (sets timeout
+#' to 5000 seconds):
+#'
+#' \code{options(timeout = max(5000, getOption("timeout")))}
+#'
 #' @details You can also download the project index manually and then use
 #'   \code{setUSGSProjectIndex()} to activate the index for use with \code{USGSlidar}
 #'   functions.
@@ -107,6 +113,12 @@ fetchUSGSProjectIndex <- function(
 #' files also changes daily so if you want the latest index, you should download
 #' the index more frequently.
 #'
+#' When retrieving large files, it may be necessary to increase the timeout period so
+#' downloads can complete. This is done using the following line of code (sets timeout
+#' to 5000 seconds):
+#'
+#' \code{options(timeout = max(5000, getOption("timeout")))}
+#'
 #' @details You can also download the tile index manually and then use \code{setUSGSTileIndex()}
 #'   to activate the index for use with \code{USGSlidar} functions.
 #'
@@ -169,6 +181,12 @@ fetchUSGSTileIndex <- function(
 #'
 #' Download one or more files (usually lidar data tiles) described
 #' by a list of URLs and place them in a folder.
+#'
+#' When retrieving large files, it may be necessary to increase the timeout period so
+#' downloads can complete. This is done using the following line of code (sets timeout
+#' to 5000 seconds):
+#'
+#' \code{options(timeout = max(5000, getOption("timeout")))}
 #'
 #' @param destfolder A character string with the name of the folder
 #'   where the downloaded tiles should be saved. If empty, tiles

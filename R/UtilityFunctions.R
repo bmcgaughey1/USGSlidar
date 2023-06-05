@@ -95,26 +95,16 @@ computeClipBufferForCONUS <- function(
 #' available data coverage. The basic operation done by this function is to apply the
 #' \code{buffer} to the features.
 #'
-#' @details Prepare point or polygon data for use when querying to determine the lidar
-#'   project or tile coverage. Typically this preparation is done by the queryUSGSProjectIndex
-#'   or queryUSGSTileIndex functions but you can use prepareTargetData to build the
+#' @details Prepare point or polygon data for use when querying to determine a lidar
+#'   project or tile coverage. Typically this function is called by the queryUSGSProjectIndex,
+#'   queryUSGSTileIndex, or queryMPCTileIndex functions but you can use prepareTargetData to build the
 #'   query objects so they can be used for other purposes.
 #'
-#'   Units for \code{buffer} are the same as the horizontal units for the input features
-#'   so you shouldn't use data in LON-LAT with units of degrees. In addition, LON-LAT
-#'   coordinates are not allowed when working with Spatial* return types and \code{(x,y)}
-#'   inputs. If you must use LON-LAT coords, set returnType = "sf".
+#'   Units for \code{buffer} are always meters.
 #'
-#'   Ideally, you should use a projection for the input \code{(x,y)} or \code{aoi} that
-#'   preserves distances and areas so the buffered area is accurate. UTM is a good
-#'   choice. Web Mercator does not preserve distance or areas so the actual area produced
-#'   when buffering a point varies considerably as you go from mid to northern or
-#'   southern latitudes. You can use the \code{computeClipBufferForCONUS} function
-#'   to adjust the buffer width depending on the location of \code{(x,y)} or \code{aoi}.
-#'   This isn't a perfect solution but it gets you close. More accurate results
-#'   can be produced by projecting you \code{(x,y)} or \code{aoi} into UTM, calling
-#'   \code{prepareTargetData}, then reproject the returned features into the
-#'   desired projection.
+#'   Features specified with \code{(x,y)} or
+#'   \code{aoi} are projected to UTM, the buffer is applied, then the features
+#'   are projected back to the original projection (or LON-LAT if applicable).
 #'
 #' @param x Location or list of locations containing the easting for the center of
 #'   the area-of-interest.
@@ -130,19 +120,20 @@ computeClipBufferForCONUS <- function(
 #'   with weird shapes if the distance is larger than the width of the polygon.
 #' @param shape Character string describing the shape of the sample area.
 #'   Valid values are \code{"square"} or \code{"circle"}. The buffer shape
-#'   is the same for all objects specified by \code{(x,y)} or \code{aoi}.
+#'   is the same for all objects specified by \code{(x,y)} or \code{aoi}. For polygon
+#'   features, \code{shape} affects the way vertices are buffered. In most cases,
+#'   use \code{shape = "eound"} for the best result.
 #' @param aoi \code{Spatial*} or \code{sf} object containing a point(s) or polygon(s)
 #'   describing the area(s) of interest. Can be points or polygons.
-#' @param crs Valid \code{proj4string} string defining the coordinate
-#'   reference system of \code{(x,y)} or \code{aoi}. \code{crs} is required when using
-#'   \code{(x,y)}. It is optional when using \code{aoi}. This can also be a valid
-#'   \code{SRS_string} for use with the sp::CRS() function where it will be provided
-#'   as the \code{projargs} argument. \code{crs} can also be an EPSG code (numeric).
+#' @param crs Valid \code{proj4string} string defining the coordinate reference
+#'   system of \code{(x,y)}. \code{crs} can also be an EPSG code (numeric).
+#'   \code{crs} is required when using \code{(x,y)}. \code{crs} is quietly ignored when using
+#'   \code{aoi}.
 #' @param segments Number of segments to use when generating a circular
 #'   area of interest. When using a \code{SpatialPoint*} or \code{sf} object
 #'   with \code{shape = "circle"}, set \code{segments} to a rather large value (60
 #'   or higher) that is a multiple of 4. The \code{gBuffer} function from
-#'   \code{rgeos} and \code{st_buffer} function from \code{sf} are used to
+#'   \code{rgeos} is used to
 #'   build the sample areas and it accepts the number of segments in a quarter
 #'   circle so small values for \code{segments} may not produce good circles.
 #'   Values for \code{segments} that are not a multiple of 4 will not
@@ -169,255 +160,223 @@ computeClipBufferForCONUS <- function(
 #' samples <- prepareTargetData(aoi = x_sf, buffer = 180)
 #' @export
 prepareTargetData <- function(
-  x,
-  y,
+  x = NULL,
+  y = NULL,
   buffer = 0,
   shape = "square",
-  aoi = "",
+  aoi = NULL,
   crs = "",
   segments = 60,
   returnType = "sf"
 ) {
-  # sample edit
-  if (inherits(aoi, "Spatial")) {
-    # see if we have a Spatial* object
-    if (grepl("Spatial", class(aoi), ignore.case = FALSE)) {
-      if ((grepl("SpatialPolygons", class(aoi), ignore.case = FALSE)) ||
-          (grepl("SpatialPoints", class(aoi), ignore.case = FALSE))) {
-        if (length(buffer) > 1) {
-          # check number of points and number of buffer values...should match
-          if (length(buffer) != length(aoi)) {
-            stop("When specify multiple buffer sizes, the number of buffers ",
-              "must match the number of objects in aoi")
-          }
+  convertTosp <- FALSE
 
-          # specific buffer for each point
-          if (tolower(shape) == "square") {
-            target <- rgeos::gBuffer(aoi,
-              byid = TRUE,
-              width = buffer,
-              capStyle = "SQUARE"
-            )
-          } else {
-            # circular buffer
-            target <- rgeos::gBuffer(aoi,
-              byid = TRUE,
-              width = buffer,
-              quadsegs = ceiling(segments / 4),
-              capStyle = "ROUND"
-            )
-          }
-        } else {
-          if (buffer == 0.0) {
-            # use points without buffers as-is
-            target = aoi
-          } else {
-            # add square buffers around points
-            # check for different buffer sizes...vector of sizes
-            # buffers correspond to each point
-            if (tolower(shape) == "square") {
-              target <- rgeos::gBuffer(aoi,
-                byid = TRUE,
-                width = rep(buffer, length(aoi)),
-                capStyle = "SQUARE"
-              )
-            } else {
-              # add circular buffers around points
-              target <- rgeos::gBuffer(aoi,
-                byid = TRUE,
-                width = rep(buffer, length(aoi)),
-                quadsegs = ceiling(segments / 4),
-                capStyle = "ROUND"
-              )
-            }
-          }
-        }
-      } else {
-        stop("unsupported Spatial* object:",
-          class(aoi))
-      }
-      # if (length(target) > 1)
-      #   message("aoi contains multiple features. Individual features ",
-      #     "will not be associated with individual lidar project ",
-      #     "polygons.")
-    } else {
-      stop("unsupported class for aoi")
-    }
-  } else if (any(grepl("sf", class(aoi), ignore.case = FALSE))) {
-    # have sf-derived object...use sf functions and return sf object
-    if ((all(sf::st_dimension(aoi) == 2)) || (all(sf::st_dimension(aoi) == 0))) {
-      # points
-      if (length(buffer) > 1) {
-        # check number of points and number of buffer values...should match
-        if (length(buffer) != length(sf::st_geometry(aoi))) {
-          stop("When specify multiple buffer sizes, the number of buffers ",
-            "must match the number of objects in aoi")
-        }
-
-        # specific buffer for each point
-        if (tolower(shape) == "square") {
-          target <- sf::st_buffer(aoi,
-            dist = buffer,
-            nQuadSegs = 5,
-            endCapStyle = "SQUARE"
-          )
-        } else {
-          # circular buffer
-          target <- sf::st_buffer(aoi,
-            dist = buffer,
-            nQuadSegs = ceiling(segments / 4),
-            endCapStyle = "ROUND"
-          )
-        }
-      } else {
-        if (buffer == 0.0) {
-          # use points without buffers as-is
-          target = aoi
-        } else {
-          # add square buffers around points
-          # check for different buffer sizes...vector of sizes
-          # same buffer applied to each point
-          if (tolower(shape) == "square") {
-            target <- sf::st_buffer(aoi,
-              dist = rep(buffer, length(sf::st_geometry(aoi))),
-              nQuadSegs = 5,
-              endCapStyle = "SQUARE"
-            )
-          } else {
-            # add circular buffers around points
-            target <- sf::st_buffer(aoi,
-              dist = rep(buffer, length(sf::st_geometry(aoi))),
-              nQuadSegs = ceiling(segments / 4),
-              endCapStyle = "ROUND"
-            )
-          }
-        }
-      }
-    } else {
-      stop("sf* object for aoi must be points or polygons")
+  # see if we have an aoi and what data type it is
+  if (!is.null(aoi)) {
+    # check data type
+    if (inherits(aoi, "Spatial")) {
+      # convert to sf and set flag
+      aoi <- sf::st_as_sf(aoi)
+      convertTosp <- TRUE
     }
   } else {
-    # create a sf object using (x,y), buffer, shape and crs
-
-    # there is a problem here if the CRS is lon-lat and returnType = "Spatial",
-    # geos buffer function won't work and process crashes.
-
+    # create point feature
     # make sure we have crs
     if (crs == "")
       stop("no crs provided for (x,y)")
 
-    # check returnType
-    if (tolower(returnType) == "spatial") {
-      # make a point feature
-      tempTarget <- sp::SpatialPointsDataFrame((rbind(c(x, y))),
-        data.frame("ID" = c("P1"), stringsAsFactors = FALSE),
-        proj4string = sp::CRS(sf::st_crs(crs)$proj4string))
+    # create object as sf...worry about converting to Spatial* at the end
+    aoi <- sf::st_sf(data.frame(ID = "P1", stringsAsFactors = F), geom = sf::st_sfc(sf::st_point(c(x, y))), crs = crs)
+  }
 
-      if (length(buffer) > 1) {
-        # check number of points and number of buffer values...should match
-        if (length(buffer) != length(tempTarget)) {
-          stop("When specify multiple buffer sizes, the number of buffers ",
-            "must match the number of objects in aoi")
-        }
+  # project to WGS84
+  target84 <- sf::st_transform(aoi, 4326)
 
-        # specific buffer for each point
-        if (tolower(shape) == "square") {
-          target <- rgeos::gBuffer(tempTarget,
-            byid = TRUE,
-            width = buffer,
-            capStyle = "SQUARE"
-          )
-        } else {
-          # circular buffer
-          target <- rgeos::gBuffer(tempTarget,
-            byid = TRUE,
-            width = buffer,
-            quadsegs = ceiling(segments / 4),
-            capStyle = "ROUND"
-          )
-        }
-      } else {
-        if (buffer == 0.0) {
-          # use point as-is
-          target = tempTarget
-        } else {
-          # buffer the point
-          # buffer is same for each point
-          if (tolower(shape) == "square") {
-            target <- rgeos::gBuffer(tempTarget,
-              byid = TRUE,
-              width = rep(buffer, length(tempTarget)),
-              capStyle = "SQUARE"
-            )
-          } else {
-            # add circular buffers around points
-            target <- rgeos::gBuffer(tempTarget,
-              byid = TRUE,
-              width = rep(buffer, length(tempTarget)),
-              quadsegs = ceiling(segments / 4),
-              capStyle = "ROUND"
-            )
-          }
-        }
+  # set attribute-geometry relationship to constant...all attributes represent the entire polygon
+  sf::st_agr(target84) <- "constant"
+
+  # get centroid...if multiple features, get centroid of unioned centroids
+  pt <- sf::st_centroid(target84)
+  if (nrow(pt) > 1) {
+    pt <- unlist(sf::st_geometry(sf::st_centroid(sf::st_union(pt))))
+  } else {
+    pt <- unlist(sf::st_geometry(pt))
+  }
+
+  # calculate EPSG code...need to do this before buffer so we can use meters as units
+  # for NAD83 zones, use 27000 instead of 32700
+  EPSG <- 32700 - round((45 + pt[2]) / 90, 0) * 100 + round((183 + pt[1]) / 6, 0)
+
+  # project to UTM
+  targetUTM <- sf::st_transform(target84, EPSG)
+
+  # buffer
+  if ((all(sf::st_dimension(targetUTM) == 2)) || (all(sf::st_dimension(targetUTM) == 0))) {
+    # points
+    if (length(buffer) > 1) {
+      # check number of points and number of buffer values...should match
+      if (length(buffer) != length(sf::st_geometry(targetUTM))) {
+        stop("When specify multiple buffer sizes, the number of buffers ",
+             "must match the number of objects in aoi")
       }
-    } else if (tolower(returnType) == "sf") {
-      tempTarget <- sf::st_sf(data.frame(ID = "P1", stringsAsFactors = F), geom = sf::st_sfc(sf::st_point(c(x, y))), crs = crs)
 
-      if (buffer == 0.0) {
-        target <- tempTarget
+      # specific buffer for each point
+      if (tolower(shape) == "square") {
+        target <- sf::st_buffer(targetUTM,
+                                dist = buffer,
+                                nQuadSegs = 5,
+                                endCapStyle = "SQUARE"
+        )
       } else {
-        # buffer the point
-        # add square buffers around points
+        # circular buffer
+        target <- sf::st_buffer(targetUTM,
+                                dist = buffer,
+                                nQuadSegs = ceiling(segments / 4),
+                                endCapStyle = "ROUND"
+        )
+      }
+    } else {
+      if (buffer == 0.0) {
+        # use points without buffers as-is
+        target = targetUTM
+      } else {
+        # add buffers around features
+        # check for different buffer sizes...vector of sizes
+        # same buffer applied to each point
         if (tolower(shape) == "square") {
-          target <- sf::st_buffer(tempTarget,
-            dist = buffer,
-            nQuadSegs = 5,
-            endCapStyle = "SQUARE"
+          target <- sf::st_buffer(targetUTM,
+                                  dist = rep(buffer, length(sf::st_geometry(targetUTM))),
+                                  nQuadSegs = 5,
+                                  endCapStyle = "SQUARE"
           )
         } else {
           # add circular buffers around points
-          target <- sf::st_buffer(tempTarget,
-            dist = buffer,
-            nQuadSegs = ceiling(segments / 4),
-            endCapStyle = "ROUND"
+          target <- sf::st_buffer(targetUTM,
+                                  dist = rep(buffer, length(sf::st_geometry(targetUTM))),
+                                  nQuadSegs = ceiling(segments / 4),
+                                  endCapStyle = "ROUND"
           )
         }
-
-        # creates a square or round buffer "manually"
-        # if (tolower(shape) == "square") {
-        #   xc <- c(x - buffer, x + buffer, x + buffer, x - buffer, x - buffer)
-        #   yc <- c(y - buffer, y - buffer, y + buffer, y + buffer, y - buffer)
-        #   target <- sf::st_sf(data.frame(ID = "S1", stringsAsFactors = F),
-        #     geom = sf::st_sfc(sf::st_polygon(list(cbind(xc, yc)))),
-        #     crs = crs)
-        # } else {
-        #   # circle code taken from https://rdrr.io/cran/sampSurf/src/R/spCircle.R
-        #   # left half of the circle, then right...
-        #   circ = seq(0, 2*pi, len = segments + 1)
-        #
-        #   #   make the circle outline...
-        #   circle = matrix(c(x + buffer * cos(circ),
-        #     y + buffer * sin(circ),
-        #     rep(1, segments + 1) ),
-        #     nrow = segments + 1)
-        #
-        #   # any little difference between start & end pts with identical()
-        #   # can mess up the the sp package Polygon routine, so set the end point
-        #   # exactly to start, then transform...
-        #   circle = rbind(circle, circle[1,])
-        #   dimnames(circle) = list(NULL,c('x','y','hc'))
-        #
-        #   # make a sf polygon object...
-        #   target <- sf::st_sf(data.frame(ID = "C1", stringsAsFactors = F),
-        #     geom = sf::st_sfc(sf::st_polygon(list(circle[, -3]))),
-        #     crs = crs)
-        # }
       }
-    } else {
-      stop("invalid return type: ", returnType)
     }
+  } else {
+    stop("aoi must be points or polygons")
   }
+
+  # project back to original crs
+  target <- sf::st_transform(target, sf::st_crs(aoi))
+
+  # convert to Spatial* if needed
+  if (tolower(returnType) == "spatial") {
+    target <- sf::as_Spatial(target)
+  }
+
   return(target)
+  #
+  #
+  #
+  #
+  #
+  # # see if we have an aoi and what data type it is
+  # if (!is.null(aoi)) {
+  #   # check data type
+  #   if (inherits(aoi, "Spatial")) {
+  #     # convert to sf and set flag
+  #     aoi <- sf::st_as_sf(aoi)
+  #     convertTosp <- TRUE
+  #   }
+  #
+  #   # have sf-derived object...use sf functions and return sf object
+  #   if ((all(sf::st_dimension(aoi) == 2)) || (all(sf::st_dimension(aoi) == 0))) {
+  #     # points
+  #     if (length(buffer) > 1) {
+  #       # check number of points and number of buffer values...should match
+  #       if (length(buffer) != length(sf::st_geometry(aoi))) {
+  #         stop("When specify multiple buffer sizes, the number of buffers ",
+  #              "must match the number of objects in aoi")
+  #       }
+  #
+  #       # specific buffer for each point
+  #       if (tolower(shape) == "square") {
+  #         target <- sf::st_buffer(aoi,
+  #                                 dist = buffer,
+  #                                 nQuadSegs = 5,
+  #                                 endCapStyle = "SQUARE"
+  #         )
+  #       } else {
+  #         # circular buffer
+  #         target <- sf::st_buffer(aoi,
+  #                                 dist = buffer,
+  #                                 nQuadSegs = ceiling(segments / 4),
+  #                                 endCapStyle = "ROUND"
+  #         )
+  #       }
+  #     } else {
+  #       if (buffer == 0.0) {
+  #         # use points without buffers as-is
+  #         target = aoi
+  #       } else {
+  #         # add buffers around features
+  #         # check for different buffer sizes...vector of sizes
+  #         # same buffer applied to each point
+  #         if (tolower(shape) == "square") {
+  #           target <- sf::st_buffer(aoi,
+  #                                   dist = rep(buffer, length(sf::st_geometry(aoi))),
+  #                                   nQuadSegs = 5,
+  #                                   endCapStyle = "SQUARE"
+  #           )
+  #         } else {
+  #           # add circular buffers around points
+  #           target <- sf::st_buffer(aoi,
+  #                                   dist = rep(buffer, length(sf::st_geometry(aoi))),
+  #                                   nQuadSegs = ceiling(segments / 4),
+  #                                   endCapStyle = "ROUND"
+  #           )
+  #         }
+  #       }
+  #     }
+  #     if (convertTosp) {
+  #       target <- sf::as_Spatial(target)
+  #     }
+  #   } else {
+  #     stop("aoi must be points or polygons")
+  #   }
+  # } else {
+  #   # no aoi: create a sf object using (x,y), buffer, shape and crs
+  #
+  #   # make sure we have crs
+  #   if (crs == "")
+  #     stop("no crs provided for (x,y)")
+  #
+  #   # create object as sf...worry about converting to Spatial* at the end
+  #   tempTarget <- sf::st_sf(data.frame(ID = "P1", stringsAsFactors = F), geom = sf::st_sfc(sf::st_point(c(x, y))), crs = crs)
+  #
+  #   if (buffer == 0.0) {
+  #     target <- tempTarget
+  #   } else {
+  #     # buffer the point
+  #     # add buffers around features
+  #     if (tolower(shape) == "square") {
+  #       target <- sf::st_buffer(tempTarget,
+  #                               dist = buffer,
+  #                               nQuadSegs = 5,
+  #                               endCapStyle = "SQUARE"
+  #       )
+  #     } else {
+  #       # add circular buffers around points
+  #       target <- sf::st_buffer(tempTarget,
+  #                               dist = buffer,
+  #                               nQuadSegs = ceiling(segments / 4),
+  #                               endCapStyle = "ROUND"
+  #       )
+  #     }
+  #   }
+  #   if (tolower(returnType) == "spatial") {
+  #     target <- sf::as_Spatial(target)
+  #   }
+  # }
+  #
+  # return(target)
 }
 
 # ---------- createSampleAreas
