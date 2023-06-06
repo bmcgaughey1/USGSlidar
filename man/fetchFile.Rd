@@ -30,6 +30,13 @@ This is a helper function used in the USGSlidar package to call
 \code{utils::download.file()} to retrieve individual index files and data
 tiles.
 }
+\details{
+When retrieving large files, it may be necessary to increase the timeout period so
+downloads can complete. This is done using the following line of code (sets timeout
+to 5000 seconds):
+
+\code{options(timeout = max(5000, getOption("timeout")))}
+}
 \examples{
 \dontrun{
 fetchFile("sample", "ftp://somewebsite.com/files/samplefile.bin")

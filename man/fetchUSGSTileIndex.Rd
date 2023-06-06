@@ -31,6 +31,12 @@ files also changes daily so if you want the latest index, you should download
 the index more frequently.
 }
 \details{
+When retrieving large files, it may be necessary to increase the timeout period so
+downloads can complete. This is done using the following line of code (sets timeout
+to 5000 seconds):
+
+\code{options(timeout = max(5000, getOption("timeout")))}
+
 You can also download the tile index manually and then use \code{setUSGSTileIndex()}
   to activate the index for use with \code{USGSlidar} functions.
 }

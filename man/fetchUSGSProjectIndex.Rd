@@ -49,6 +49,12 @@ stored in geopackage format and can be somewhat large. The index
 is refreshed whenever new data is added to the USGS collection.
 }
 \details{
+When retrieving large files, it may be necessary to increase the timeout period so
+downloads can complete. This is done using the following line of code (sets timeout
+to 5000 seconds):
+
+\code{options(timeout = max(5000, getOption("timeout")))}
+
 You can also download the project index manually and then use
   \code{setUSGSProjectIndex()} to activate the index for use with \code{USGSlidar}
   functions.

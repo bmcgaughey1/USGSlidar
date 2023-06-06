@@ -32,6 +32,12 @@ USGSEnv$USGSProjectsWebMerc <- ""
 #' \code{utils::download.file()} to retrieve individual index files and data
 #' tiles.
 #'
+#' When retrieving large files, it may be necessary to increase the timeout period so
+#' downloads can complete. This is done using the following line of code (sets timeout
+#' to 5000 seconds):
+#'
+#' \code{options(timeout = max(5000, getOption("timeout")))}
+#'
 #' @param url A character string with the URL for the file. If using local files,
 #'   the URL should start with \code{file://} and you should set \code{method="auto"}.
 #' @param destfile A character string specifying the file name for the

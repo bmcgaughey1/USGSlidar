@@ -106,6 +106,17 @@
 #'   of this library.
 #' @param verbose Boolean to enable printing of status messages. This is really
 #'   only useful for code debugging.
+#' @param useLegacyBuffering Boolean flag indicating that the \code{buffer} should
+#'   be applied to features in their original projection. This was the original
+#'   behavior of \code{prepareTargetData} prior to changes in June 2023. When TRUE,
+#'   the old version of \code{prepareTargetData} is used. When TRUE, the new version
+#'   of \code{prepareTargetData} is used. When writing new code, you will get more
+#'   accurate features using the new version of \code{prepareTargetData} because
+#'   features are first projected to UTM and then buffers are generated. The old
+#'   version of \code{prepareTargetData} applied buffers using the features in their
+#'   native projection so if you were using a projection that did not preserve distances
+#'   or areas, buffered shapes (e.g., points with a circular buffer) did not
+#'   represent the correct area.
 #' @param ... Additional arguments passed to \code{download.file}
 #' @return A \code{SpatialPolygonsDataFrame} or \code{sf} object containing project
 #'   polygon(s) and attribute(s) for lidar projects covering the specified area.
@@ -132,6 +143,7 @@ queryUSGSProjectIndex <- function(
   dropNAColumns = NULL,
   clean = FALSE,
   verbose = FALSE,
+  useLegacyBuffering = FALSE,
   ...
 ) {
   # turn off some warnings from rgdal...I think these are related to updates to PROJ
@@ -156,13 +168,13 @@ queryUSGSProjectIndex <- function(
     if (verbose) message("--Projecting target features to web mercator")
     targetWebMerc <- sf::st_transform(target, 3857)
   } else {
-    targetWebMerc <- ""
+    targetWebMerc <- NULL
   }
 
   # prepare feature data for query...may be based on point (x,y) or
   # aoi (Spatial* or sf* object)
   if (verbose) message("--Preparing target data")
-  targetWebMerc <- prepareTargetData(x, y, buffer, shape, targetWebMerc, crs, segments, returnType)
+  targetWebMerc <- prepareTargetData(x, y, buffer, shape, targetWebMerc, crs, segments, returnType, useLegacyBuffering = useLegacyBuffering)
 
   if (is.null(aoi)) {
     # just in case returnType is not sf, convert
@@ -424,6 +436,17 @@ queryUSGSProjectIndex <- function(
 #'   used with \code{(x,y)}.
 #' @param verbose Boolean to enable printing of status messages. This is really
 #'   only useful for code debugging.
+#' @param useLegacyBuffering Boolean flag indicating that the \code{buffer} should
+#'   be applied to features in their original projection. This was the original
+#'   behavior of \code{prepareTargetData} prior to changes in June 2023. When TRUE,
+#'   the old version of \code{prepareTargetData} is used. When TRUE, the new version
+#'   of \code{prepareTargetData} is used. When writing new code, you will get more
+#'   accurate features using the new version of \code{prepareTargetData} because
+#'   features are first projected to UTM and then buffers are generated. The old
+#'   version of \code{prepareTargetData} applied buffers using the features in their
+#'   native projection so if you were using a projection that did not preserve distances
+#'   or areas, buffered shapes (e.g., points with a circular buffer) did not
+#'   represent the correct area.
 #' @param ... Additional arguments passed to \code{download.file}
 #' @return A \code{SpatialPolygonsDataFrame} or \code{sf} object containing
 #'   polygon(s) and attribute(s) for tiles covering the specified area.
@@ -449,6 +472,7 @@ queryUSGSTileIndex <- function(
   returnType = "sf",
   returncrs = "same",
   verbose = FALSE,
+  useLegacyBuffering = FALSE,
   ...
 ) {
   # I could add the clean option that is used for the project index. However, I
@@ -483,13 +507,13 @@ queryUSGSTileIndex <- function(
     if (verbose) message("--Projecting target features to web mercator")
     targetWebMerc <- sf::st_transform(target, 3857)
   } else {
-    targetWebMerc <- ""
+    targetWebMerc <- NULL
   }
 
   # prepare feature data for query...may be based on point (x,y) or
   # aoi (Spatial* or sf* object)
   if (verbose) message("--Preparing target data")
-  targetWebMerc <- prepareTargetData(x, y, buffer, shape, targetWebMerc, crs, segments, returnType)
+  targetWebMerc <- prepareTargetData(x, y, buffer, shape, targetWebMerc, crs, segments, returnType, useLegacyBuffering = useLegacyBuffering)
 
   if (is.null(aoi)) {
     # just in case returnType is not sf, convert

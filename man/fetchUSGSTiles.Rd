@@ -38,6 +38,13 @@ An (invisible) atomic vector of integer codes corresponding to the
 Download one or more files (usually lidar data tiles) described
 by a list of URLs and place them in a folder.
 }
+\details{
+When retrieving large files, it may be necessary to increase the timeout period so
+downloads can complete. This is done using the following line of code (sets timeout
+to 5000 seconds):
+
+\code{options(timeout = max(5000, getOption("timeout")))}
+}
 \examples{
 \dontrun{
 fetchUSGSTiles("", URLlist)

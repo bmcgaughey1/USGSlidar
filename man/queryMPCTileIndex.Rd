@@ -5,20 +5,20 @@
 \title{USGS Lidar Toolkit -- Identify Microsoft Planetary Computer Lidar Tiles Covering Area}
 \usage{
 queryMPCTileIndex(
-  x,
-  y,
+  x = NULL,
+  y = NULL,
   buffer = 0,
   projectID = NULL,
   fieldname = "workunit_id",
   shape = "square",
   aoi = NULL,
   crs = "",
-  index = "",
   segments = 60,
   return = "index",
   returnType = "sf",
   returncrs = "same",
   verbose = FALSE,
+  useLegacyBuffering = FALSE,
   ...
 )
 }
@@ -35,7 +35,7 @@ allowing a different buffer size for each object when \code{aoi} is a
 \code{Spatial*} or \code{sf} object. \code{buffer} can be negative with
 polygon features to reduce the area considered. However, you may end up
 with weird shapes if the distance is larger than the width of the polygon.
-Data in \code{(x,y)} and \code{aoi} are projected into the web mercator
+Data in \code{(x,y)} and \code{aoi} are projected into the UTM
 coordinate reference system before the buffer operation is done so the
 units for \code{buffer} are always meters.}
 
@@ -92,6 +92,18 @@ used with \code{(x,y)}.}
 \item{verbose}{Boolean to enable printing of status messages. This is really
 only useful for code debugging.}
 
+\item{useLegacyBuffering}{Boolean flag indicating that the \code{buffer} should
+be applied to features in their original projection. This was the original
+behavior of \code{prepareTargetData} prior to changes in June 2023. When TRUE,
+the old version of \code{prepareTargetData} is used. When TRUE, the new version
+of \code{prepareTargetData} is used. When writing new code, you will get more
+accurate features using the new version of \code{prepareTargetData} because
+features are first projected to UTM and then buffers are generated. The old
+version of \code{prepareTargetData} applied buffers using the features in their
+native projection so if you were using a projection that did not preserve distances
+or areas, buffered shapes (e.g., points with a circular buffer) did not
+represent the correct area.}
+
 \item{...}{Additional arguments passed to \code{download.file}}
 }
 \value{
@@ -101,12 +113,17 @@ A \code{SpatialPolygonsDataFrame} or \code{sf} object containing
   followed by attributes for the lidar tile polygons..
 }
 \description{
-Intersect a set of features (points or polygons) against the STAC index
+Intersect a set of features (points or polygons) against the lidar point data STAC index
 on Microsoft Planetary Computer to determine which tiles are needed to provide coverage for the
 features. This index contains every lidar point tile in the MPC-USGS lidar
 collection. Queries for features covering a large area can take some time.
 }
 \details{
+The MPC lidar collection contains all lidar data produced by USGS as of Fall 2022.
+Projects added to the USGS data collection after this date are currently not added
+to the MPC data collection. This could change in the future. Check MPC for additional
+information about the lidar data colection.
+
 Query the MPC tile index to find tiles that intersect the \code{buffer}ed
   \code{(x,y)} point(s) or \code{buffer}ed feature(s) provided in \code{aoi}.
 }
