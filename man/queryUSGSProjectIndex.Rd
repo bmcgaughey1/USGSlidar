@@ -20,6 +20,7 @@ queryUSGSProjectIndex(
   dropNAColumns = NULL,
   clean = FALSE,
   verbose = FALSE,
+  useLegacyBuffering = FALSE,
   ...
 )
 }
@@ -124,6 +125,18 @@ of this library.}
 
 \item{verbose}{Boolean to enable printing of status messages. This is really
 only useful for code debugging.}
+
+\item{useLegacyBuffering}{Boolean flag indicating that the \code{buffer} should
+be applied to features in their original projection. This was the original
+behavior of \code{prepareTargetData} prior to changes in June 2023. When TRUE,
+the old version of \code{prepareTargetData} is used. When TRUE, the new version
+of \code{prepareTargetData} is used. When writing new code, you will get more
+accurate features using the new version of \code{prepareTargetData} because
+features are first projected to UTM and then buffers are generated. The old
+version of \code{prepareTargetData} applied buffers using the features in their
+native projection so if you were using a projection that did not preserve distances
+or areas, buffered shapes (e.g., points with a circular buffer) did not
+represent the correct area.}
 
 \item{...}{Additional arguments passed to \code{download.file}}
 }

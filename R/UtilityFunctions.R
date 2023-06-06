@@ -316,6 +316,12 @@ prepareTargetData <- function(
 #'   \code{prepareTargetDataLegacy}, then reproject the returned features into the
 #'   desired projection.
 #'
+#'   \code{prepareTargetDataLegacy} is the original version of the \code{prepareTargetData}
+#'   function in the package. It has been replaced by a new version of the function that
+#'   projects features to UTM, applies the buffer, then projects feature back to the
+#'   original projection. The new version produces more accurate features. This is
+#'   especially true when using point features.
+#'
 #' @param x Location or list of locations containing the easting for the center of
 #'   the area-of-interest.
 #' @param y Location or list of locations containing the northing for the center of
