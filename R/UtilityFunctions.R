@@ -102,9 +102,15 @@ computeClipBufferForCONUS <- function(
 #'
 #'   Units for \code{buffer} are always meters.
 #'
-#'   Features specified with \code{(x,y)} or
-#'   \code{aoi} are projected to UTM, the buffer is applied, then the features
-#'   are projected back to the original projection (or LON-LAT if applicable).
+#'   In operation, features are first projected to WGS84 LON-LAT. Then the centroid of all
+#'   features is computed and used to determine the UTM zone. Features are
+#'   projected to UTM and the buffer is applied. Then the features
+#'   are projected back to the original projection (or LON-LAT if applicable). As a result,
+#'   the actual shape of the buffered area when providing point features may not
+#'   be a perfect circle or square if the original projection does not preserve
+#'   distances. If this behavior causes problems, you can specify \code{useLegacyBuffering = TRUE}
+#'   to any of the query functions to have the buffer applied using the native
+#'   projection of the input features.
 #'
 #' @param x Location or list of locations containing the easting for the center of
 #'   the area-of-interest.
@@ -143,6 +149,9 @@ computeClipBufferForCONUS <- function(
 #'   used to specify the area-of-interest. Valid values are \code{"Spatial"}
 #'   or \code{"sf"}. \code{returnType} is ignored when \code{aoi} is specified
 #'   and the return type will match the object type of \code{aoi}.
+#' @param useLegacyBuffering Boolean flag indicating that the \code{buffer} should
+#'   be applied to features in their original projection. This was the original
+#'   behavior of \code{prepareTargetData} prior to changes in June 2023.
 #' @return A set of optionally buffered spatial features. The return type will
 #'   be the same as the \code{aoi} type. When \code{(x,y)} is used,
 #'   \code{returnType} specifies the object type returned by \code{prepareTargetData}.
@@ -167,8 +176,12 @@ prepareTargetData <- function(
   aoi = NULL,
   crs = "",
   segments = 60,
-  returnType = "sf"
+  returnType = "sf",
+  useLegacyBuffering = FALSE
 ) {
+  if (useLegacyBuffering)
+    return(prepareTargetDataLegacy(x, y, buffer, shape, aoi, crs, segments, returnType))
+
   convertTosp <- FALSE
 
   # see if we have an aoi and what data type it is

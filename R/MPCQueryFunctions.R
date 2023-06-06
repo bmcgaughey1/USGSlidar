@@ -71,6 +71,17 @@
 #'   used with \code{(x,y)}.
 #' @param verbose Boolean to enable printing of status messages. This is really
 #'   only useful for code debugging.
+#' @param useLegacyBuffering Boolean flag indicating that the \code{buffer} should
+#'   be applied to features in their original projection. This was the original
+#'   behavior of \code{prepareTargetData} prior to changes in June 2023. When TRUE,
+#'   the old version of \code{prepareTargetData} is used. When TRUE, the new version
+#'   of \code{prepareTargetData} is used. When writing new code, you will get more
+#'   accurate features using the new version of \code{prepareTargetData} because
+#'   features are first projected to UTM and then buffers are generated. The old
+#'   version of \code{prepareTargetData} applied buffers using the features in their
+#'   native projection so if you were using a projection that did not preserve distances
+#'   or areas, buffered shapes (e.g., points with a circular buffer) did not
+#'   represent the correct area.
 #' @param ... Additional arguments passed to \code{download.file}
 #' @return A \code{SpatialPolygonsDataFrame} or \code{sf} object containing
 #'   polygon(s) and attribute(s) for tiles covering the specified area.
@@ -95,6 +106,7 @@ queryMPCTileIndex <- function(
     returnType = "sf",
     returncrs = "same",
     verbose = FALSE,
+    useLegacyBuffering = FALSE,
     ...
 ) {
   # turn off some warnings from rgdal...I think these are related to updates to PROJ
@@ -147,7 +159,9 @@ queryMPCTileIndex <- function(
   # prepare feature data for query...may be based on point (x,y) or
   # aoi (Spatial* or sf* object)
   if (verbose) message("--Preparing target data")
-  targetUTM <- prepareTargetData(x = x, y = y, buffer = buffer, shape = shape, aoi = targetUTM, crs = crs, segments = segments, returnType = returnType)
+  targetUTM <- prepareTargetData(x = x, y = y, buffer = buffer, shape = shape,
+                                 aoi = targetUTM, crs = crs, segments = segments,
+                                 returnType = returnType, useLegacyBuffering = useLegacyBuffering)
 
   if (is.null(aoi)) {
     # just in case returnType is not sf, convert
