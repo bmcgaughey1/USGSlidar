@@ -178,9 +178,11 @@ queryMPCTileIndex <- function(
     sf::st_agr(target84) <- "constant"
 
     # get centroid...if multiple features, get centroid of unioned centroids
-    cent <- sf::st_centroid(target84)
-    if (nrow(cent) > 1) {
-      pt <- unlist(sf::st_geometry(sf::st_centroid(sf::st_union(cent))))
+    pt <- sf::st_centroid(target84)
+    if (nrow(pt) > 1) {
+      pt <- unlist(sf::st_geometry(sf::st_centroid(sf::st_union(pt))))
+    } else {
+      pt <- unlist(sf::st_geometry(pt))
     }
 
     # calculate EPSG code for UTM zone
