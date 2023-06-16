@@ -59,7 +59,14 @@
 #'   \code{"index"} (default) to return tile shapes that provide coverage
 #'   for the features in the \code{"aoi"} or the area defined by \code{(x,y)}
 #'   and \code{buffer}. When tile shapes are returned there is no \code{"aoi"}
-#'   information included with the project shape attributes.
+#'   information included with the project shape attributes. There are two
+#'   types of URLs returned for the lidar tiles. The \code{URL} field contains
+#'   the unsigned URL for the tiles and the \code{signedURL} field contains a signed URL.
+#'   The signed URLs are only valid for the current R session and cannot be
+#'   saved and used at a later time. If you need to use the URLs in a different R
+#'   session or a different process, you will need to obtain access tokens and
+#'   append them to the URLs. If you are using R, you can use the \code{signMPCURL}
+#'   function in the \code{USGSlidar} package to sign the URLs.
 #' @param returnType Character string specifying the object type for the
 #'   returned polygon object when \code{(x,y)} is used to specify the
 #'   area-of-interest. Valid values are \code{"Spatial"} or \code{"sf"}.
@@ -89,7 +96,7 @@
 #'   followed by attributes for the lidar tile polygons..
 #' @examples
 #' \dontrun{
-#' queryUSGSTileIndex(-13540901, 5806426, 180, shape = "circle", crs = 3857)
+#' queryMPCTileIndex(-13540901, 5806426, 180, shape = "circle", crs = 3857)
 #'   }
 #' @export
 queryMPCTileIndex <- function(
@@ -223,13 +230,17 @@ queryMPCTileIndex <- function(
   if (is.null(it_obj)) return(NULL)
   if (length(it_obj) < 1) return(NULL)
 
-  it_obj <- rstac::items_sign(it_obj, sign_fn = rstac::sign_planetary_computer())
+  # get unsigned URL
   URLs <- rstac::assets_url(it_obj, asset_names = "data")
+
+  it_obj <- rstac::items_sign(it_obj, sign_fn = rstac::sign_planetary_computer())
+  signedURLs <- rstac::assets_url(it_obj, asset_names = "data")
 
   tiles <- rstac::items_as_sf(it_obj)
 
   # add URLS
   tiles$URL <- URLs
+  tiles$signedURL <- signedURLs
 
   if (tolower(return) == "index") {
     # set return to target shapes with no target attribute information
@@ -287,4 +298,43 @@ queryMPCTileIndex <- function(
   }
 
   return(shortlist)
+}
+
+# ---------- signMPCURL
+#
+#' USGS Lidar Toolkit -- Sign lidar tile URLs using MPC access token
+#'
+#' Query Microsoft Planetary Computer to obtain an access token and use it to sign
+#' URLs for lidar point tiles.
+#'
+#' Signed URLs are only valid for the current R session and cannot be stored
+#' for later use without resigning the URL.
+#'
+#' @param URLs character list containing unsigned URL(s) for point tiles.
+#' @return A character list of signed URLs taht can be used with \code{fetchUSGSTiles}
+#'   or any other function that retrieves files using https protocol.
+#' @examples
+#' \dontrun{
+#' signMPCURL(URLs)
+#'   }
+#' @export
+signMPCURL <- function(
+    URLs = NULL
+) {
+  if (is.null(URLs))
+    stop("You must provide at least one URL to sign")
+
+  # look for existing signing...not yet
+
+  getInfoInJson <- httr::GET('https://planetarycomputer.microsoft.com/api/sas/v1/token/3dep-lidar-copc',
+                             accept_json())
+
+  # check the return
+  if (!getInfoInJson$status_code == 200)
+    stop("GET request for access token failed")
+
+  # save the info in a json object
+  jsonInfoImg <- content(getInfoInJson, type="application/json")
+
+  return(paste0(URLs, "?", jsonInfoImg$token))
 }

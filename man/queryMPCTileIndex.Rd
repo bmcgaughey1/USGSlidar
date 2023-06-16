@@ -76,7 +76,14 @@ with additional attributes providing lidar project information and
 \code{"index"} (default) to return tile shapes that provide coverage
 for the features in the \code{"aoi"} or the area defined by \code{(x,y)}
 and \code{buffer}. When tile shapes are returned there is no \code{"aoi"}
-information included with the project shape attributes.}
+information included with the project shape attributes. There are two
+types of URLs returned for the lidar tiles. The \code{URL} field contains
+the unsigned URL for the tiles and the \code{signedURL} field contains a signed URL.
+The signed URLs are only valid for the current R session and cannot be
+saved and used at a later time. If you need to use the URLs in a different R
+session or a different process, you will need to obtain access tokens and
+append them to the URLs. If you are using R, you can use the \code{signMPCURL}
+function in the \code{USGSlidar} package to sign the URLs.}
 
 \item{returnType}{Character string specifying the object type for the
 returned polygon object when \code{(x,y)} is used to specify the
@@ -129,6 +136,6 @@ Query the MPC tile index to find tiles that intersect the \code{buffer}ed
 }
 \examples{
 \dontrun{
-queryUSGSTileIndex(-13540901, 5806426, 180, shape = "circle", crs = 3857)
+queryMPCTileIndex(-13540901, 5806426, 180, shape = "circle", crs = 3857)
   }
 }
