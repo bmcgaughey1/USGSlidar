@@ -304,14 +304,19 @@ queryMPCTileIndex <- function(
 #
 #' USGS Lidar Toolkit -- Sign lidar tile URLs using MPC access token
 #'
-#' Query Microsoft Planetary Computer to obtain an access token and use it to sign
-#' URLs for lidar point tiles.
+#' Query Microsoft Planetary Computer (MPC) to obtain an access token and use it to sign
+#' URLs for lidar point tiles. Function does not verify that the \code{URLs} point to
+#' assets on MPC. It does, however, verify that \code{URLs} point to assets in
+#' MPC blob storage. Only assets in MPC blob storage need access tokens. If \code{URLs}
+#' do not point to assets in MPC blob storage, \code{URLs} are returned unchanged.
+#'
+#' Existing token are removed from \code{URLs} prior to signing.
 #'
 #' Signed URLs are only valid for the current R session and cannot be stored
 #' for later use without resigning the URL.
 #'
 #' @param URLs character list containing unsigned URL(s) for point tiles.
-#' @return A character list of signed URLs taht can be used with \code{fetchUSGSTiles}
+#' @return A character list of signed URLs that can be used with \code{fetchUSGSTiles}
 #'   or any other function that retrieves files using https protocol.
 #' @examples
 #' \dontrun{
@@ -324,17 +329,31 @@ signMPCURL <- function(
   if (is.null(URLs))
     stop("You must provide at least one URL to sign")
 
-  # look for existing signing...not yet
-
   getInfoInJson <- httr::GET('https://planetarycomputer.microsoft.com/api/sas/v1/token/3dep-lidar-copc',
-                             accept_json())
+                             httr::accept_json())
 
   # check the return
   if (!getInfoInJson$status_code == 200)
     stop("GET request for access token failed")
 
   # save the info in a json object
-  jsonInfoImg <- content(getInfoInJson, type="application/json")
+  jsonInfoImg <- httr::content(getInfoInJson, type="application/json")
 
-  return(paste0(URLs, "?", jsonInfoImg$token))
+  # loop through the list of URLs (could be a single item)
+  # loop is not the best but I need to check each URL to make sure it is in blob storage
+  ret <- vector("list", length(URLs))
+  for (i in 1:length(URLs)) {
+    # look for existing signing and remove
+    t <- regexpr("\\?", URLs[i])
+    if (t != -1)
+      URLs[i] <- substr(URLs[i], 1, t - 1)
+
+    # check that asset is in blob storage
+    if (regexpr(".blob.core.windows.net", URLs[i], ignore.case = TRUE) == -1) {
+      ret[i] = URLs[i]
+    } else {
+      ret[i] <- paste0(URLs[i], "?", jsonInfoImg$token)
+    }
+  }
+  return(ret)
 }

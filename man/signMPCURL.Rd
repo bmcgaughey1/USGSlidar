@@ -10,14 +10,19 @@ signMPCURL(URLs = NULL)
 \item{URLs}{character list containing unsigned URL(s) for point tiles.}
 }
 \value{
-A character list of signed URLs taht can be used with \code{fetchUSGSTiles}
+A character list of signed URLs that can be used with \code{fetchUSGSTiles}
   or any other function that retrieves files using https protocol.
 }
 \description{
-Query Microsoft Planetary Computer to obtain an access token and use it to sign
-URLs for lidar point tiles.
+Query Microsoft Planetary Computer (MPC) to obtain an access token and use it to sign
+URLs for lidar point tiles. Function does not verify that the \code{URLs} point to
+assets on MPC. It does, however, verify that \code{URLs} point to assets in
+MPC blob storage. Only assets in MPC blob storage need access tokens. If \code{URLs}
+do not point to assets in MPC blob storage, \code{URLs} are returned unchanged.
 }
 \details{
+Existing token are removed from \code{URLs} prior to signing.
+
 Signed URLs are only valid for the current R session and cannot be stored
 for later use without resigning the URL.
 }

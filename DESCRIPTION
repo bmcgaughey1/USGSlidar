@@ -17,7 +17,6 @@ Imports:
     stats,
     rstac,
     httr,
-    geojsonsf,
     urltools
 License: CC0
 Encoding: UTF-8
