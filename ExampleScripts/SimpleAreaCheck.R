@@ -66,7 +66,8 @@ setUSGSProjectIndex("WESM_3_31_2023.gpkg")
 # defined by the center points and buffer...return is project area(s)
 # that intersect the rectangular area
 # this call is not needed for this example but useful for mapping
-polys1 <- queryUSGSProjectIndex(midX, midY, buffer, crs = sp::CRS(SRS_string="EPSG:6346")@projargs, verbose = TRUE, lidarOnly = TRUE)
+polys1 <- queryUSGSProjectIndex(midX, midY, buffer, crs = epsg, verbose = TRUE, lidarOnly = TRUE)
+#polys1 <- queryUSGSProjectIndex(midX, midY, buffer, crs = sp::CRS(SRS_string="EPSG:6346")@projargs, verbose = TRUE, lidarOnly = TRUE)
 
 if (showMaps) mapview(list(polys1))
 
@@ -75,7 +76,8 @@ target <- polys1[3,]
 # now query to get the rectangular sample area attributed with the project
 # polygon information...same call as above with return="aoi"
 # return is the square sample area attributed with project information
-aoi1 <- queryUSGSProjectIndex(midX, midY, buffer, crs = sp::CRS(SRS_string="EPSG:6346")@projargs, verbose = TRUE, lidarOnly = TRUE, return = "aoi")
+aoi1 <- queryUSGSProjectIndex(midX, midY, buffer, crs = epsg, verbose = TRUE, lidarOnly = TRUE, return = "aoi")
+#aoi1 <- queryUSGSProjectIndex(midX, midY, buffer, crs = sp::CRS(SRS_string="EPSG:6346")@projargs, verbose = TRUE, lidarOnly = TRUE, return = "aoi")
 
 # manually set the correct project. this could be done using the project name in the code above but the attributes
 # for the project in WESM don't match the name used for the folders on rockyweb. Folder name has "USGS_LPC_" but

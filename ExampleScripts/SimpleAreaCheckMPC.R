@@ -29,9 +29,6 @@ buffer <- (bbMaxX - bbMinX) / 2
 
 epsg <- 6346
 
-showMaps <- TRUE
-if (showMaps) library(mapview)
-
 # this will need to be changed to the folder containing local copies of the USGS index files
 setwd("G:/R_Stuff")
 
@@ -39,7 +36,8 @@ setwd("G:/R_Stuff")
 # using return = "aoi" returns geometry for the intersection of the tiles with the aoi
 # using return = "index" returns geometry for the full tile (complete record from tile index)...nothing to relate back to aoi
 tiles <- queryMPCTileIndex(midX, midY, buffer
-                           , crs = sp::CRS(SRS_string="EPSG:6346")@projargs
+                           #, crs = sp::CRS(SRS_string="EPSG:6346")@projargs
+                           , crs = epsg
                            , return = "aoi"
 )
 
