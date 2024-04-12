@@ -47,8 +47,7 @@ as the \code{projargs} argument. \code{crs} can also be an EPSG code (numeric).}
 \item{segments}{Number of segments to use when generating a circular
 area of interest. When using a \code{SpatialPoint*} or \code{sf} object
 with \code{shape = "circle"}, set \code{segments} to a rather large value (60
-or higher) that is a multiple of 4. The \code{gBuffer} function from
-\code{rgeos} and \code{st_buffer} function from \code{sf} are used to
+or higher) that is a multiple of 4. The \code{st_buffer} function from \code{sf} is used to
 build the sample areas and it accepts the number of segments in a quarter
 circle so small values for \code{segments} may not produce good circles.
 Values for \code{segments} that are not a multiple of 4 will not

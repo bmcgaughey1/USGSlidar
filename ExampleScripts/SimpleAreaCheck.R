@@ -86,7 +86,7 @@ if (showMaps) mapview(list(polys1, aoi1))
 
 # use a local copy of the USGS tile index...this is a large file so I tend to always use a local copy
 # there may be problems with some projects in the tile index. For this example, I know the index is good.
-setUSGSTileIndex("E:/Backup/R_Stuff/PlotClipping/LPC_TESM_3_9_2022.gpkg")
+setUSGSTileIndex("H:/Backup/R_Stuff/PlotClipping/LPC_TESM_3_9_2022.gpkg")
 
 # need to run this using each aoi polygon since the URLs rely on the lpc_link for each project covering the aoi
 # for this example, only 1 project is involved so the loop isn't needed

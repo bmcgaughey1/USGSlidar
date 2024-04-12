@@ -138,8 +138,8 @@ computeClipBufferForCONUS <- function(
 #' @param segments Number of segments to use when generating a circular
 #'   area of interest. When using a \code{SpatialPoint*} or \code{sf} object
 #'   with \code{shape = "circle"}, set \code{segments} to a rather large value (60
-#'   or higher) that is a multiple of 4. The \code{gBuffer} function from
-#'   \code{rgeos} is used to
+#'   or higher) that is a multiple of 4. The \code{st_uffer} function from
+#'   \code{sf} is used to
 #'   build the sample areas and it accepts the number of segments in a quarter
 #'   circle so small values for \code{segments} may not produce good circles.
 #'   Values for \code{segments} that are not a multiple of 4 will not
@@ -347,8 +347,7 @@ prepareTargetData <- function(
 #' @param segments Number of segments to use when generating a circular
 #'   area of interest. When using a \code{SpatialPoint*} or \code{sf} object
 #'   with \code{shape = "circle"}, set \code{segments} to a rather large value (60
-#'   or higher) that is a multiple of 4. The \code{gBuffer} function from
-#'   \code{rgeos} and \code{st_buffer} function from \code{sf} are used to
+#'   or higher) that is a multiple of 4. The \code{st_buffer} function from \code{sf} is used to
 #'   build the sample areas and it accepts the number of segments in a quarter
 #'   circle so small values for \code{segments} may not produce good circles.
 #'   Values for \code{segments} that are not a multiple of 4 will not
@@ -385,69 +384,7 @@ prepareTargetDataLegacy <- function(
     returnType = "sf"
 ) {
   if (inherits(aoi, "Spatial")) {
-    # see if we have a Spatial* object
-    if (grepl("Spatial", class(aoi), ignore.case = FALSE)) {
-      if ((grepl("SpatialPolygons", class(aoi), ignore.case = FALSE)) ||
-          (grepl("SpatialPoints", class(aoi), ignore.case = FALSE))) {
-        if (length(buffer) > 1) {
-          # check number of points and number of buffer values...should match
-          if (length(buffer) != length(aoi)) {
-            stop("When specify multiple buffer sizes, the number of buffers ",
-                 "must match the number of objects in aoi")
-          }
-
-          # specific buffer for each point
-          if (tolower(shape) == "square") {
-            target <- rgeos::gBuffer(aoi,
-                                     byid = TRUE,
-                                     width = buffer,
-                                     capStyle = "SQUARE"
-            )
-          } else {
-            # circular buffer
-            target <- rgeos::gBuffer(aoi,
-                                     byid = TRUE,
-                                     width = buffer,
-                                     quadsegs = ceiling(segments / 4),
-                                     capStyle = "ROUND"
-            )
-          }
-        } else {
-          if (buffer == 0.0) {
-            # use points without buffers as-is
-            target = aoi
-          } else {
-            # add square buffers around points
-            # check for different buffer sizes...vector of sizes
-            # buffers correspond to each point
-            if (tolower(shape) == "square") {
-              target <- rgeos::gBuffer(aoi,
-                                       byid = TRUE,
-                                       width = rep(buffer, length(aoi)),
-                                       capStyle = "SQUARE"
-              )
-            } else {
-              # add circular buffers around points
-              target <- rgeos::gBuffer(aoi,
-                                       byid = TRUE,
-                                       width = rep(buffer, length(aoi)),
-                                       quadsegs = ceiling(segments / 4),
-                                       capStyle = "ROUND"
-              )
-            }
-          }
-        }
-      } else {
-        stop("unsupported Spatial* object:",
-             class(aoi))
-      }
-      # if (length(target) > 1)
-      #   message("aoi contains multiple features. Individual features ",
-      #     "will not be associated with individual lidar project ",
-      #     "polygons.")
-    } else {
-      stop("unsupported class for aoi")
-    }
+    stop("prepareTargetDataLegacy no longer supports Spatial* objects for")
   } else if (any(grepl("sf", class(aoi), ignore.case = FALSE))) {
     # have sf-derived object...use sf functions and return sf object
     if ((all(sf::st_dimension(aoi) == 2)) || (all(sf::st_dimension(aoi) == 0))) {
@@ -511,113 +448,33 @@ prepareTargetDataLegacy <- function(
     if (crs == "")
       stop("no crs provided for (x,y)")
 
-    # check returnType
+    # create point object and do buffering. convert type afterwards, if needed
+    tempTarget <- sf::st_sf(data.frame(ID = "P1", stringsAsFactors = F), geom = sf::st_sfc(sf::st_point(c(x, y))), crs = crs)
+
+    if (buffer == 0.0) {
+      target <- tempTarget
+    } else {
+      # buffer the point
+      # add square buffers around points
+      if (tolower(shape) == "square") {
+        target <- sf::st_buffer(tempTarget,
+                                dist = buffer,
+                                nQuadSegs = 5,
+                                endCapStyle = "SQUARE"
+        )
+      } else {
+        # add circular buffers around points
+        target <- sf::st_buffer(tempTarget,
+                                dist = buffer,
+                                nQuadSegs = ceiling(segments / 4),
+                                endCapStyle = "ROUND"
+        )
+      }
+    }
     if (tolower(returnType) == "spatial") {
-      # make a point feature
-      tempTarget <- sp::SpatialPointsDataFrame((rbind(c(x, y))),
-                                               data.frame("ID" = c("P1"), stringsAsFactors = FALSE),
-                                               proj4string = sp::CRS(sf::st_crs(crs)$proj4string))
-
-      if (length(buffer) > 1) {
-        # check number of points and number of buffer values...should match
-        if (length(buffer) != length(tempTarget)) {
-          stop("When specify multiple buffer sizes, the number of buffers ",
-               "must match the number of objects in aoi")
-        }
-
-        # specific buffer for each point
-        if (tolower(shape) == "square") {
-          target <- rgeos::gBuffer(tempTarget,
-                                   byid = TRUE,
-                                   width = buffer,
-                                   capStyle = "SQUARE"
-          )
-        } else {
-          # circular buffer
-          target <- rgeos::gBuffer(tempTarget,
-                                   byid = TRUE,
-                                   width = buffer,
-                                   quadsegs = ceiling(segments / 4),
-                                   capStyle = "ROUND"
-          )
-        }
-      } else {
-        if (buffer == 0.0) {
-          # use point as-is
-          target = tempTarget
-        } else {
-          # buffer the point
-          # buffer is same for each point
-          if (tolower(shape) == "square") {
-            target <- rgeos::gBuffer(tempTarget,
-                                     byid = TRUE,
-                                     width = rep(buffer, length(tempTarget)),
-                                     capStyle = "SQUARE"
-            )
-          } else {
-            # add circular buffers around points
-            target <- rgeos::gBuffer(tempTarget,
-                                     byid = TRUE,
-                                     width = rep(buffer, length(tempTarget)),
-                                     quadsegs = ceiling(segments / 4),
-                                     capStyle = "ROUND"
-            )
-          }
-        }
-      }
+      target <- sf::as_Spatial(target)
     } else if (tolower(returnType) == "sf") {
-      tempTarget <- sf::st_sf(data.frame(ID = "P1", stringsAsFactors = F), geom = sf::st_sfc(sf::st_point(c(x, y))), crs = crs)
-
-      if (buffer == 0.0) {
-        target <- tempTarget
-      } else {
-        # buffer the point
-        # add square buffers around points
-        if (tolower(shape) == "square") {
-          target <- sf::st_buffer(tempTarget,
-                                  dist = buffer,
-                                  nQuadSegs = 5,
-                                  endCapStyle = "SQUARE"
-          )
-        } else {
-          # add circular buffers around points
-          target <- sf::st_buffer(tempTarget,
-                                  dist = buffer,
-                                  nQuadSegs = ceiling(segments / 4),
-                                  endCapStyle = "ROUND"
-          )
-        }
-
-        # creates a square or round buffer "manually"
-        # if (tolower(shape) == "square") {
-        #   xc <- c(x - buffer, x + buffer, x + buffer, x - buffer, x - buffer)
-        #   yc <- c(y - buffer, y - buffer, y + buffer, y + buffer, y - buffer)
-        #   target <- sf::st_sf(data.frame(ID = "S1", stringsAsFactors = F),
-        #     geom = sf::st_sfc(sf::st_polygon(list(cbind(xc, yc)))),
-        #     crs = crs)
-        # } else {
-        #   # circle code taken from https://rdrr.io/cran/sampSurf/src/R/spCircle.R
-        #   # left half of the circle, then right...
-        #   circ = seq(0, 2*pi, len = segments + 1)
-        #
-        #   #   make the circle outline...
-        #   circle = matrix(c(x + buffer * cos(circ),
-        #     y + buffer * sin(circ),
-        #     rep(1, segments + 1) ),
-        #     nrow = segments + 1)
-        #
-        #   # any little difference between start & end pts with identical()
-        #   # can mess up the the sp package Polygon routine, so set the end point
-        #   # exactly to start, then transform...
-        #   circle = rbind(circle, circle[1,])
-        #   dimnames(circle) = list(NULL,c('x','y','hc'))
-        #
-        #   # make a sf polygon object...
-        #   target <- sf::st_sf(data.frame(ID = "C1", stringsAsFactors = F),
-        #     geom = sf::st_sfc(sf::st_polygon(list(circle[, -3]))),
-        #     crs = crs)
-        # }
-      }
+      # do nothing, object is already sf type
     } else {
       stop("invalid return type: ", returnType)
     }
@@ -663,8 +520,7 @@ prepareTargetDataLegacy <- function(
 #' @param segments Number of segments to use when generating a circular
 #'   sample areas. When using a \code{SpatialPoint*} or \code{sf} object
 #'   with \code{shape = "circle"}, set \code{segments} to a rather large value (60
-#'   or higher) that is a multiple of 4. The \code{gBuffer} function from
-#'   \code{rgeos} and \code{st_buffer} function from \code{sf} are used to
+#'   or higher) that is a multiple of 4. The \code{st_buffer} function from \code{sf} is used to
 #'   build the sample areas and it accepts the number of segments in a quarter
 #'   circle so small values for \code{segments} may not produce good circles.
 #'   Values for \code{segments} that are not a multiple of 4 will not
