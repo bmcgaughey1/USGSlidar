@@ -47,8 +47,8 @@ for regular (systematically aligned) sampling; and "hexagonal" for sampling on a
 lattice. While other options are available in (and will be passed to) \code{spsample()},
 their behavior as used in this application is unknown.}
 
-\item{polyBuffer}{Distance to reduce the size of the polygon(s) by applying \code{rgeos::gbuffer}
-with \code{width = -polyBuffer}. A value <= 0 will produce no buffer.}
+\item{polyBuffer}{Distance to reduce the size of the polygon(s) by applying \code{sf::st_buffer}
+with \code{dist = -polyBuffer}. A value <= 0 will produce no buffer.}
 
 \item{gridSpacing}{Desired grid size passed to \code{spsample()}.}
 

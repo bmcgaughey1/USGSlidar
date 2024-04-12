@@ -55,8 +55,8 @@
 #'   for regular (systematically aligned) sampling; and "hexagonal" for sampling on a hexagonal
 #'   lattice. While other options are available in (and will be passed to) \code{spsample()},
 #'   their behavior as used in this application is unknown.
-#' @param polyBuffer Distance to reduce the size of the polygon(s) by applying \code{rgeos::gbuffer}
-#'   with \code{width = -polyBuffer}. A value <= 0 will produce no buffer.
+#' @param polyBuffer Distance to reduce the size of the polygon(s) by applying \code{sf::st_buffer}
+#'   with \code{dist = -polyBuffer}. A value <= 0 will produce no buffer.
 #' @param gridSpacing Desired grid size passed to \code{spsample()}.
 #' @param offset Position of the regular sample grid in the unit cell [0,1] x [0,1]. The default
 #'   is \code{c(0.5,0.5)} placing the position of the grid at the center of the sample cell.
@@ -160,9 +160,12 @@ generatePolygonSamplePoints <- function(
 
       # buffer the polygon to the inside
       if (polyBuffer > 0) {
-        currentPoly <- rgeos::gBuffer(polys[thePoly, ],
-                                      byid = TRUE,
-                                      width = -polyBuffer)
+        currentPoly <- sf::as_Spatial(
+          sf::st_buffer(sf::st_as_sf(polys[thePoly, ]), dist = -polyBuffer, singleSide = T)
+        )
+        # currentPoly <- rgeos::gBuffer(polys[thePoly, ],
+        #                               byid = TRUE,
+        #                               width = -polyBuffer)
       }
 
       if (currentPoly@polygons[[1]]@area >= minimumArea) {

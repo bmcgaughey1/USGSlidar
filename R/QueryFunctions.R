@@ -60,8 +60,7 @@
 #' @param segments Number of segments to use when generating a circular
 #'   area of interest. When using a \code{SpatialPoint*} or \code{sf} object
 #'   with \code{shape = "circle"}, set \code{segments} to a rather large value (60
-#'   or higher) that is a multiple of 4. The \code{gBuffer} function from
-#'   \code{rgeos} and \code{st_buffer} function from \code{sf} are used to
+#'   or higher) that is a multiple of 4. The \code{st_buffer} function from \code{sf} is used to
 #'   build the sample areas and it accepts the number of segments in a quarter
 #'   circle so small values for \code{segments} may not produce good circles.
 #'   Values for \code{segments} that are not a multiple of 4 will not
@@ -146,11 +145,6 @@ queryUSGSProjectIndex <- function(
   useLegacyBuffering = FALSE,
   ...
 ) {
-  # turn off some warnings from rgdal...I think these are related to updates to PROJ
-  # and a lag between various package updates and how the packages interact with PROJ
-  rgdal::set_rgdal_show_exportToProj4_warnings(FALSE)
-  rgdal::set_thin_PROJ6_warnings(TRUE)
-
   # assume we are working with sf objects. if aoi is not sf, convert to sf and set flag
   # indicating we need to convert back to Spatial*...not relevant if using (x,y)
   convertTosp <- FALSE
@@ -307,10 +301,6 @@ queryUSGSProjectIndex <- function(
   if (verbose) message("--Intersecting target objects with index polygons")
   prj <- sf::st_intersection(targetWebMerc, projectsWebMerc)
 
-  # intersect index with AOI...return is AOI shapes with AOI attributes
-  # on right side of columns
-  #prj <- raster::intersect(projectsWebMerc, targetWebMerc)
-
   if (length(prj) == 0)
     stop("no project polygons overlap the target aoi")
 
@@ -332,7 +322,7 @@ queryUSGSProjectIndex <- function(
     if (inherits(aoi, "Spatial")) {
       # aoi is Spatial* object
       if (verbose) message("--Projecting results: case 1")
-      shortlist <- sf::st_transform(shortlist, crs=sf::st_crs(sp::CRS(raster::crs(aoi, asText = T))))
+      shortlist <- sf::st_transform(shortlist, crs=sf::st_crs(sf::st_as_sf(aoi)))
     } else if (inherits(aoi, "sf")) {
       # aoi is sf object
       if (verbose) message("--Projecting results: case 2")
@@ -411,8 +401,7 @@ queryUSGSProjectIndex <- function(
 #' @param segments Number of segments to use when generating a circular
 #'   area of interest. When using a \code{SpatialPoint*} or \code{sf} object
 #'   with \code{shape = "circle"}, set \code{segments} to a rather large value (60
-#'   or higher) that is a multiple of 4. The \code{gBuffer} function from
-#'   \code{rgeos} and \code{st_buffer} function from \code{sf} are used to
+#'   or higher) that is a multiple of 4. The \code{st_buffer} function from \code{sf} is used to
 #'   build the sample areas and it accepts the number of segments in a quarter
 #'   circle so small values for \code{segments} may not produce good circles.
 #'   Values for \code{segments} that are not a multiple of 4 will not
@@ -480,10 +469,6 @@ queryUSGSTileIndex <- function(
   # represent more "friendly" shapes than the project polygons. The cleaning is
   # easy to add so I will wait...NOT!!!! (the easy part...it is only easy if it works)
   #
-  # turn off some warnings from rgdal...I think these are related to updates to PROJ
-  # and a lag between various package updates and how the packages interact with PROJ
-  rgdal::set_rgdal_show_exportToProj4_warnings(FALSE)
-  rgdal::set_thin_PROJ6_warnings(TRUE)
 
   # check that we have something in the projectID
   if (!length(projectID)) {
@@ -643,7 +628,7 @@ queryUSGSTileIndex <- function(
         if (inherits(aoi, "Spatial")) {
           # aoi is Spatial* object
           if (verbose) message("--Projecting results: case 1")
-          shortlist <- sf::st_transform(shortlist, crs=sf::st_crs(sp::CRS(raster::crs(aoi, asText = T))))
+          shortlist <- sf::st_transform(shortlist, crs=sf::st_crs(sf::st_as_sf(aoi)))
         } else if (inherits(aoi, "sf")) {
           # aoi is sf object
           if (verbose) message("--Projecting results: case 2")

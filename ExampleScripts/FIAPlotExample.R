@@ -1,7 +1,6 @@
 #
 # example use of USGSlidar package with FIA plots
 #
-library(rgdal)
 library(sf)
 library(mapview)
 library(RSQLite)
@@ -17,7 +16,7 @@ state <- "TN"
 clipSize <- 1000
 showMaps <- TRUE
 
-useEvalidator <- TRUE
+useEvalidator <- FALSE
 if (useEvalidator) {
   # code from Jim Ellenwood to read PLOT data from Evalidator
   # works as of 9/30/2021 but the API may go away in the future
@@ -160,8 +159,8 @@ dateHalfRange <- years(2) + months(6)
 #   if FALSE, target plots and pts will only include plots outside the old date range and within the new range
 #
 # For "normal" use, subsetBehavior should be TRUE
-#subsetBehavior <- TRUE
-subsetBehavior <- FALSE
+subsetBehavior <- TRUE
+#subsetBehavior <- FALSE
 
 if (subsetBehavior) {
   # do the date filtering on the POLYGONS
