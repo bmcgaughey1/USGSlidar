@@ -20,6 +20,8 @@ useEvalidator <- FALSE
 if (useEvalidator) {
   # code from Jim Ellenwood to read PLOT data from Evalidator
   # works as of 9/30/2021 but the API may go away in the future
+  #
+  # 4/12/2024 no longer works
   library(httr)
   library(jsonlite)
 
