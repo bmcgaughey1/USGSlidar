@@ -9,7 +9,6 @@ Description: Includes functions to browse the USGS LIDAR data collection,
     collections.
 Imports:
     jsonlite,
-    raster,
     sp,
     sf,
     stats,

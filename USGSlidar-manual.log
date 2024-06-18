@@ -1,0 +1,49 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2024.2.20)  17 JUN 2024 17:19
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**../USGSlidar.Rcheck/USGSlidar-manual.tex
+(../USGSlidar.Rcheck/USGSlidar-manual.tex
+LaTeX2e <2023-11-01> patch level 1
+L3 programming layer <2024-02-13>
+
+(c:/Users/bmcgaughey/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/book.cls
+Document Class: book 2023/05/17 v1.4n Standard LaTeX document class
+(c:/Users/bmcgaughey/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/bk10.clo
+File: bk10.clo 2023/05/17 v1.4n Standard LaTeX file (size option)
+)
+\c@part=\count188
+\c@chapter=\count189
+\c@section=\count190
+\c@subsection=\count191
+\c@subsubsection=\count192
+\c@paragraph=\count193
+\c@subparagraph=\count194
+\c@figure=\count195
+\c@table=\count196
+\abovecaptionskip=\skip48
+\belowcaptionskip=\skip49
+\bibindent=\dimen140
+)
+
+! LaTeX Error: File `Rd.sty' not found.
+
+Type X to quit or <RETURN> to proceed,
+or enter new name. (Default extension: sty)
+
+Enter file name: 
+! Emergency stop.
+<read *> 
+         
+l.4 \usepackage
+               {makeidx}^^M 
+Here is how much of TeX's memory you used:
+ 252 strings out of 476101
+ 3243 string characters out of 5791742
+ 1924998 words of memory out of 5000000
+ 22424 multiletter control sequences out of 15000+600000
+ 558069 words of font info for 36 fonts, out of 8000000 for 9000
+ 14 hyphenation exceptions out of 8191
+ 35i,0n,38p,193b,36s stack positions out of 10000i,1000n,20000p,200000b,200000s
+
+!  ==> Fatal error occurred, no output PDF file produced!

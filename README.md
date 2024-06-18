@@ -90,7 +90,7 @@ devtools::install_github("bmcgaughey1/USGSlidar", build_vignettes = TRUE)
 
 In 2022, the USGS TESM tile index has problems with some lidar projects.
 The problems were related to missing or bad geometries for some tiles
-and involved \~20 lidar projects (haven’t checked non-lidar projects).
+and involved ~20 lidar projects (haven’t checked non-lidar projects).
 The queryUSGSTileIndex() function works correctly when the project being
 queried has good tiles but it may fail when there are missing or bad
 tile geometries within the project. USGS corrected these problems as
@@ -120,13 +120,13 @@ the trailing “/” and add it if missing.
 
 The data for Glacier Peak in Washington state is identified in WESM by:
 
--   workunit = “WA_GlacierPeak_2014”
--   workunit = 18330
--   project = “Glacier_Peak_WA_QL1_LiDAR”
--   project_id = 18332
--   lpc_pub_date = “2016-08-08”
--   lpc_link =
-    “<https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/USGS_LPC_WA_GlacierPeak_2014_LAS_2016/>”
+- workunit = “WA_GlacierPeak_2014”
+- workunit = 18330
+- project = “Glacier_Peak_WA_QL1_LiDAR”
+- project_id = 18332
+- lpc_pub_date = “2016-08-08”
+- lpc_link =
+  “<https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/USGS_LPC_WA_GlacierPeak_2014_LAS_2016/>”
 
 Data for this area were collected in 2014-2015 and published in 2016.
 The point data files area actually located in
@@ -137,10 +137,10 @@ and individual files names look like this:
 The record in the TESM tile index for the same tile contains the
 following:
 
--   tile_id = “10TFU1514”
--   project = “Glacier_Peak_WA_QL1_LiDAR”
--   project_id = 18332
--   workunit_id = 18330
+- tile_id = “10TFU1514”
+- project = “Glacier_Peak_WA_QL1_LiDAR”
+- project_id = 18332
+- workunit_id = 18330
 
 For this project and tile, we can construct a URL as follows (R syntax
 using lubridate package for year() function): URL \<-

@@ -51,3 +51,18 @@ results <- fetchUSGSTiles(tileFolder, URLs[1])
 message(sum(results == 0, na.rm = TRUE), " out of ", length(URLs), " retreived or already available")
 
 # at this point, we have tiles covering the aoi.
+
+
+
+
+
+
+URLFile <- "C:/Users/bmcgaughey/Box/VMARS-TL/VMARS/Projects/FUSIONTestData/MPCTileURLs.txt"
+URLs <- read.table(URLFile)
+URLs
+
+# sign URLS
+signedURLs <- signMPCURL(unlist(URLs))
+
+tileFolder <- "H:/FUSIONTestData"
+results <- fetchUSGSTiles(tileFolder, signedURLs)

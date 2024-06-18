@@ -207,7 +207,8 @@ generatePolygonSamplePoints <- function(
 
         # draw a sample of points if we have more points than requested
         if (targetCount > 0 && nrow(dummyLocations@coords) > targetCount) {
-          dummyList <- raster::sampleInt(nrow(dummyLocations@coords), targetCount, replace = FALSE)
+          dummyList <- sample(nrow(dummyLocations@coords), targetCount, replace = FALSE)
+          #dummyList <- raster::sampleInt(nrow(dummyLocations@coords), targetCount, replace = FALSE)
 
           # generate list of dummy locations to use
           dummyLocations <- dummyLocations[dummyList, ]
